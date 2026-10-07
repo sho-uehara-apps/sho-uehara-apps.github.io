@@ -1,0 +1,5618 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-OGu19iFiZrfTYvCYsKsT5s1OpEU+ag3uGdGOc0bap0g='; style-src 'sha256-cf8GRw2XanQfcJBtXvAoMJmQuUbAahOIWyEgp6OxNT4='; img-src 'self' data: blob:; manifest-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>キャリアグラフ</title>
+<meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14181c" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="キャリアグラフ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>/*
+ * キャリアグラフ 画面の見た目
+ * 落ち着いた配色と情報密度（進捗管理表ツールから引き継ぐもの）。色は変数にまとめ、ダークモードで入れ替える。
+ * スマホ（幅 760px 以下）では、クイック入力を「＋ 記録する」から全画面で開く。
+ */
+
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f0f2f4;
+  --text: #1c2227;
+  --muted: #5b6670;
+  --border: #dde2e6;
+  --accent: #1f5f6b;
+  --accent-text: #ffffff;
+  --accent-soft: #e4eff1;
+  --chip: #eceff2;
+  --chip-on: #1f5f6b;
+  --chip-on-text: #ffffff;
+  --info-bg: #eaf2f4;
+  --info-border: #c3dbe0;
+  --warn-text: #7a4a00;
+  --warn-bg: #fff6df;
+  --warn-border: #efd9a2;
+  --danger-text: #9f241a;
+  --danger-bg: #fdeeec;
+  --danger-border: #f0c4bf;
+  --inbox-bg: #fff1d6;
+  --inbox-text: #7a4a00;
+  --dev-bg: #8a4b08;
+  --focus: #2f7f8c;
+  --shadow: 0 1px 2px rgba(20, 30, 40, 0.06), 0 2px 8px rgba(20, 30, 40, 0.05);
+  --radius: 8px;
+  --font: system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14181c;
+    --surface: #1b2126;
+    --surface-2: #222a30;
+    --text: #e3e7ea;
+    --muted: #9aa5ae;
+    --border: #2f383f;
+    --accent: #6db3be;
+    --accent-text: #0f1a1d;
+    --accent-soft: #1d3135;
+    --chip: #262e35;
+    --chip-on: #6db3be;
+    --chip-on-text: #0f1a1d;
+    --info-bg: #172a2e;
+    --info-border: #2b4a50;
+    --warn-text: #f0c46c;
+    --warn-bg: #2b2414;
+    --warn-border: #574722;
+    --danger-text: #f2a097;
+    --danger-bg: #321b19;
+    --danger-border: #5c2e29;
+    --inbox-bg: #3a2e14;
+    --inbox-text: #f0c46c;
+    --dev-bg: #b86a12;
+    --focus: #8fd0da;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.35;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- ボタン・入力 ---------- */
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--surface-2);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+
+.btn-danger {
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+
+.btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 16px; /* iPhone で入力時に画面が拡大されないよう、16px 以上にする */
+  line-height: 1.5;
+}
+
+textarea.input {
+  resize: vertical;
+  min-height: 4.5em;
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--danger-text);
+}
+
+.label,
+.field > label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.field {
+  margin-bottom: 12px;
+}
+
+.date-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input-date {
+  max-width: 13em;
+}
+
+.form-error {
+  color: var(--danger-text);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.form-blocked {
+  color: var(--danger-text);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* ---------- チップ・バッジ ---------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-block;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 1px 9px;
+  border: 1px solid transparent;
+}
+
+.chip-toggle {
+  appearance: none;
+  font: inherit;
+  font-size: 14px;
+  padding: 4px 12px;
+  cursor: pointer;
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.chip-toggle[aria-pressed="true"] {
+  background: var(--chip-on);
+  border-color: var(--chip-on);
+  color: var(--chip-on-text);
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  padding: 0 6px;
+}
+
+.badge-inbox {
+  background: var(--inbox-bg);
+  color: var(--inbox-text);
+}
+
+.badge-dev {
+  background: var(--dev-bg);
+  color: #ffffff;
+}
+
+/* ---------- ヘッダー ---------- */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 16px;
+  padding: 8px 16px;
+  padding-top: calc(8px + env(safe-area-inset-top));
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.save-status .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3f9b5a;
+}
+
+.save-status.is-pending .dot {
+  background: #c49320;
+}
+
+.save-status.is-error {
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+.save-status.is-error .dot {
+  background: var(--danger-text);
+}
+
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-age {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.export-age.is-warn {
+  color: var(--warn-text);
+  font-weight: 600;
+}
+
+/* ---------- 本体 ---------- */
+
+.app-main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+/* ---------- お知らせ ---------- */
+
+.notices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notices:not(:empty) {
+  margin-bottom: 16px;
+}
+
+.notice {
+  border: 1px solid var(--info-border);
+  background: var(--info-bg);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.notice-warn {
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
+}
+
+.notice-error {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.report {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.report summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.report-list {
+  margin: 6px 0 0;
+  padding-left: 0;
+  list-style: none;
+  max-height: 16em;
+  overflow: auto;
+}
+
+.report-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  padding: 3px 0;
+  border-top: 1px solid var(--border);
+}
+
+.report-level {
+  font-weight: 600;
+  min-width: 3.5em;
+}
+
+.level-error .report-level,
+.level-drop .report-level {
+  color: var(--danger-text);
+}
+
+.report-before {
+  color: var(--muted);
+  flex-basis: 100%;
+  font-size: 12px;
+}
+
+/* ---------- クイック入力 ---------- */
+
+.qi-sheet {
+  margin-bottom: 20px;
+}
+
+.quick-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px 12px;
+}
+
+.qi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.qi-heading {
+  font-size: 15px;
+}
+
+.qi-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---------- 経験の一覧 ---------- */
+
+.list-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.list-title {
+  font-size: 16px;
+}
+
+.list-count {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.exp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.exp-item + .exp-item {
+  border-top: 1px solid var(--border);
+}
+
+.exp-body {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+}
+
+button.exp-body {
+  cursor: pointer;
+}
+
+button.exp-body:hover {
+  background: var(--surface-2);
+}
+
+.exp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.exp-date {
+  font-variant-numeric: tabular-nums;
+}
+
+.exp-date.is-empty {
+  font-style: italic;
+}
+
+.exp-title {
+  display: block;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.exp-title.is-untitled {
+  font-weight: 400;
+}
+
+.exp-memo {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.exp-item.is-open .exp-memo {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
+.empty {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+/* ---------- 重ねて開く画面（データ） ---------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(10, 15, 20, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  padding: calc(24px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom))
+    calc(16px + env(safe-area-inset-left));
+  overflow: auto;
+}
+
+.panel {
+  width: 100%;
+  max-width: 560px;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 14px 16px 18px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.panel-section {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.panel-section h3 {
+  font-size: 14px;
+}
+
+.quarantine-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.quarantine-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.q-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.q-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.q-reason {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.q-meta,
+.q-message {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.plain-list {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+/* ---------- 読み込めないときの画面 ---------- */
+
+.recovery {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(24px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom))
+    calc(16px + env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recovery h1 {
+  font-size: 20px;
+}
+
+.recovery-lead {
+  font-weight: 600;
+  color: var(--danger-text);
+}
+
+.recovery-help li + li {
+  margin-top: 4px;
+}
+
+.recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.recovery-status {
+  font-size: 14px;
+}
+
+/* ---------- トースト・記録ボタン ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  z-index: 40;
+  background: #23292e;
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+}
+
+.fab {
+  position: fixed;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 20;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 13px 22px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+/* ---------- 幅による出し分け ---------- */
+
+@media (min-width: 761px) {
+  .only-narrow,
+  .qi-close {
+    display: none !important;
+  }
+  .app-main {
+    padding-bottom: 32px;
+  }
+}
+
+@media (max-width: 760px) {
+  .only-wide {
+    display: none !important;
+  }
+  .app-header {
+    padding-top: calc(6px + env(safe-area-inset-top));
+    padding-bottom: 6px;
+  }
+  .header-top {
+    flex-basis: 100%;
+    justify-content: space-between;
+  }
+  .header-tools {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+  .header-tools .export-age {
+    margin-right: auto;
+  }
+  .app-main {
+    padding-top: 12px;
+  }
+  .qi-sheet {
+    display: none;
+    margin: 0;
+  }
+  .qi-sheet.is-open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    overflow: auto;
+    background: var(--bg);
+    padding: calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom))
+      calc(12px + env(safe-area-inset-left));
+  }
+  .qi-sheet.is-open .quick-input {
+    box-shadow: none;
+  }
+  body.sheet-open .fab {
+    display: none;
+  }
+  body.sheet-open {
+    overflow: hidden;
+  }
+}
+</style>
+</head>
+<body>
+<noscript>このアプリを使うには、JavaScript を有効にしてください。</noscript>
+<div id="app"></div>
+<script>(function () {
+"use strict";
+globalThis.CAREER_GRAPH_BUILD = Object.freeze({"channel":"main","commit":"456e775","builtAt":"2026-10-07T11:49:24.317Z"});
+const __defs = Object.create(null);
+const __cache = Object.create(null);
+function __define(id, fn) {
+  __defs[id] = fn;
+}
+function __require(id) {
+  if (__cache[id]) return __cache[id];
+  const fn = __defs[id];
+  if (!fn) throw new Error("モジュールがありません: " + id);
+  const exports = {};
+  __cache[id] = exports;
+  fn(exports, __require);
+  return Object.freeze(exports);
+}
+function __export(target, getters) {
+  for (const name of Object.keys(getters)) Object.defineProperty(target, name, { enumerable: true, get: getters[name] });
+}
+function __exportStar(target, source) {
+  for (const name of Object.keys(source)) {
+    if (!Object.prototype.hasOwnProperty.call(target, name)) {
+      Object.defineProperty(target, name, { enumerable: true, get: () => source[name] });
+    }
+  }
+}
+__define("core/constants.js", function (__exports, __require) {
+"use strict";
+/*
+ * キャリアグラフ 定数（DOM非依存）
+ *
+ * 画面の表示名（日本語）と、保存データ上の値（英語のキー）の対応もここに集める。
+ * 保存データの形を変えるときは SCHEMA_VERSION を上げ、migrate.js に移行関数を足すこと。
+ */
+
+/** 保存JSONの app 欄。別ツールのJSONを誤って読み込まないための識別子 */
+const APP_ID = "career-graph";
+
+/** 保存データの形の版（データバージョン） */
+const SCHEMA_VERSION = 1;
+
+/** 能力レベルの定義（指示書「7. 能力レベル」の文言）。市場評価ではなく、自分自身の現在の認識 */
+const LEVELS = Object.freeze([
+  Object.freeze({ level: 0, label: "経験・知識がほぼない" }),
+  Object.freeze({ level: 1, label: "知識があり、基本的な説明ができる" }),
+  Object.freeze({ level: 2, label: "指示やサポートがあれば実施できる" }),
+  Object.freeze({ level: 3, label: "自分で一通り実施できる" }),
+  Object.freeze({ level: 4, label: "他者に説明・レビューできる" }),
+  Object.freeze({ level: 5, label: "状況に応じて設計・判断・改善できる" }),
+]);
+const LEVEL_MIN = 0;
+const LEVEL_MAX = 5;
+
+/**
+ * 選択肢の初期値。設定画面で追加できる。
+ * categories と evidenceTypes は指示書の例をそのまま使う。
+ */
+const DEFAULT_LISTS = Object.freeze({
+  categories: Object.freeze([
+    "本業", "開発", "業務改善", "AI / LLM", "AWS / クラウド", "資格学習",
+    "教育", "マネジメント", "個人開発", "問題解決", "その他",
+  ]),
+  phases: Object.freeze(["要件定義", "基本設計", "詳細設計", "実装", "テスト", "運用"]),
+  roles: Object.freeze(["担当", "リーダー", "管理", "講師", "メンター"]),
+  evidenceTypes: Object.freeze([
+    "GitHub", "Gitコミット", "ソースコード", "設計書", "資料", "成果物",
+    "社内評価", "顧客評価", "数値", "スクリーンショット", "URL", "ファイル",
+  ]),
+  capabilityCategories: Object.freeze(["技術", "設計・開発", "問題解決", "マネジメント・対人"]),
+});
+
+/** 選択肢の一覧の名前（設定画面・報告の表示用） */
+const LIST_LABELS = Object.freeze({
+  categories: "カテゴリ",
+  phases: "工程",
+  roles: "役割",
+  evidenceTypes: "Evidenceの種類",
+  capabilityCategories: "能力カテゴリ",
+});
+
+/**
+ * V1では名前の変更・削除をできない選択肢。
+ * 偏りマップの行や、「他社でも説明可能なEvidence」の判定（種類が社内評価以外）に使うため。
+ */
+const LOCKED_LABELS = Object.freeze({
+  categories: Object.freeze(["AI / LLM", "AWS / クラウド", "教育", "業務改善", "マネジメント", "個人開発"]),
+  phases: Object.freeze(["要件定義", "基本設計", "詳細設計", "実装", "テスト", "運用"]),
+  roles: Object.freeze(["リーダー"]),
+  evidenceTypes: Object.freeze(["社内評価"]),
+  capabilityCategories: Object.freeze([]),
+});
+
+/** 値の種類ごとの、保存上の値 → 表示名 */
+const ENUMS = Object.freeze({
+  linkState: Object.freeze({ confirmed: "確定", candidate: "候補" }),
+  linkSource: Object.freeze({ self: "自分", nameMatch: "名前一致", nextExperience: "Next Experience", ai: "AI" }),
+  evidenceStatus: Object.freeze({ planned: "予定", done: "済" }),
+  disclosure: Object.freeze({ public: "提示可", describable: "説明のみ", internal: "社内限り" }),
+  gapStatus: Object.freeze({ open: "未解消", resolved: "解消", onHold: "保留" }),
+  nextStatus: Object.freeze({
+    considering: "検討中", planned: "予定", inProgress: "実行中", done: "完了", dropped: "見送り",
+  }),
+});
+
+/** 値の種類ごとの、新しく作るときの既定値。提示可否は、迷ったときに外へ出ない「社内限り」にする */
+const ENUM_DEFAULTS = Object.freeze({
+  linkState: "confirmed",
+  linkSource: "self",
+  evidenceStatus: "done",
+  disclosure: "internal",
+  gapStatus: "open",
+  nextStatus: "considering",
+});
+
+/**
+ * 読み込んだ値が読めない・無いときに補う値。未確認のものを確定や済に格上げしないよう、
+ * 紐付けは「候補」、Evidence は「予定」にする（どちらも集計や根拠に入らない）
+ */
+const ENUM_REPAIR_DEFAULTS = Object.freeze({
+  linkState: "candidate",
+  linkSource: "self",
+  evidenceStatus: "planned",
+  disclosure: "internal",
+  gapStatus: "open",
+  nextStatus: "considering",
+});
+
+/** 経験の内容（指示書「5. 経験データ」の内容9項目）。[保存上のキー, 表示名] */
+const CONTENT_FIELDS = Object.freeze([
+  ["background", "背景"],
+  ["problem", "問題"],
+  ["issue", "課題"],
+  ["thinking", "自分が考えたこと"],
+  ["action", "実施したこと"],
+  ["result", "結果"],
+  ["learned", "学んだこと"],
+  ["failed", "失敗したこと"],
+  ["improved", "改善したこと"],
+]);
+
+/** 経験の意味づけ（指示書「13. 市場価値について」）。[保存上のキー, 表示名] */
+const MEANING_FIELDS = Object.freeze([
+  ["internal", "社内での意味"],
+  ["technical", "技術的な意味"],
+  ["problemSolving", "問題解決としての意味"],
+]);
+
+/** コレクション（データの種類）と、そのIDの接頭辞。並び順は保存JSONの並び順 */
+const ID_PREFIX = Object.freeze({
+  projects: "prj",
+  experiences: "exp",
+  capabilities: "cap",
+  capRelations: "crl",
+  expCapLinks: "lnk",
+  assessments: "asm",
+  evidences: "evd",
+  expRelations: "rel",
+  gaps: "gap",
+  nextExperiences: "nxt",
+});
+const COLLECTIONS = Object.freeze(Object.keys(ID_PREFIX));
+
+/** つなぐ2つのIDから ID を決めるコレクション（ids.js の linkId / capRelationId） */
+const DERIVED_ID_COLLECTIONS = Object.freeze(["capRelations", "expCapLinks"]);
+
+/** コレクションの表示名（報告・画面用） */
+const COLLECTION_LABELS = Object.freeze({
+  projects: "プロジェクト",
+  experiences: "経験",
+  capabilities: "能力",
+  capRelations: "能力どうしの関連",
+  expCapLinks: "経験と能力の紐付け",
+  assessments: "自己評価",
+  evidences: "Evidence",
+  expRelations: "経験どうしの関連",
+  gaps: "Gap",
+  nextExperiences: "Next Experience",
+});
+
+/** 項目の表示名（報告・画面用）。コレクションをまたいで同じキーは同じ意味で使う */
+const FIELD_LABELS = Object.freeze({
+  id: "ID",
+  createdAt: "記録日時",
+  updatedAt: "更新日時",
+  deletedAt: "削除日時",
+  name: "名前",
+  publicName: "社外向けの呼び方",
+  start: "開始",
+  end: "終了",
+  note: "メモ",
+  parentId: "大まかな経験",
+  projectId: "プロジェクト",
+  title: "タイトル",
+  ongoing: "継続中",
+  categories: "カテゴリ",
+  phases: "工程",
+  role: "役割",
+  roleNote: "役割の補足",
+  techs: "使用技術",
+  tags: "タグ",
+  inbox: "未整理",
+  memo: "走り書き",
+  content: "内容",
+  meaning: "意味づけ",
+  category: "能力カテゴリ",
+  description: "説明",
+  aliases: "別名",
+  archived: "アーカイブ",
+  aId: "能力（1つ目）",
+  bId: "能力（2つ目）",
+  experienceId: "経験",
+  capabilityId: "能力",
+  state: "状態",
+  source: "出どころ",
+  date: "日付",
+  level: "レベル",
+  reason: "理由",
+  experienceIds: "挙げた経験",
+  type: "種類",
+  url: "URL・パス",
+  text: "中身",
+  status: "状態",
+  disclosure: "提示可否",
+  fromId: "関連元の経験",
+  toId: "関連先の経験",
+  desiredState: "目指す状態",
+  detail: "詳細",
+  targets: "対象の能力",
+  why: "なぜ必要か",
+  gapIds: "Gap",
+  capabilityIds: "伸ばしたい能力",
+  plannedEvidence: "残すEvidence",
+  when: "目安の時期",
+  resultExperienceId: "記録した経験",
+  joinedAt: "入社年月",
+  lists: "選択肢",
+  replacements: "置換リスト",
+});
+__export(__exports, { "APP_ID": () => APP_ID, "SCHEMA_VERSION": () => SCHEMA_VERSION, "LEVELS": () => LEVELS, "LEVEL_MIN": () => LEVEL_MIN, "LEVEL_MAX": () => LEVEL_MAX, "DEFAULT_LISTS": () => DEFAULT_LISTS, "LIST_LABELS": () => LIST_LABELS, "LOCKED_LABELS": () => LOCKED_LABELS, "ENUMS": () => ENUMS, "ENUM_DEFAULTS": () => ENUM_DEFAULTS, "ENUM_REPAIR_DEFAULTS": () => ENUM_REPAIR_DEFAULTS, "CONTENT_FIELDS": () => CONTENT_FIELDS, "MEANING_FIELDS": () => MEANING_FIELDS, "ID_PREFIX": () => ID_PREFIX, "COLLECTIONS": () => COLLECTIONS, "DERIVED_ID_COLLECTIONS": () => DERIVED_ID_COLLECTIONS, "COLLECTION_LABELS": () => COLLECTION_LABELS, "FIELD_LABELS": () => FIELD_LABELS });
+});
+__define("core/dates.js", function (__exports, __require) {
+"use strict";
+/*
+ * 日付まわり（DOM非依存・純粋関数）
+ *
+ * 経験の日付は「精度つき日付」で持つ。
+ *   "2024"        年まで分かっている
+ *   "2024-06"     月まで分かっている
+ *   "2024-06-15"  日まで分かっている
+ *   ""            不明
+ * 集計は月単位で行う。月は「月番号」（年×12＋月−1 の整数）で扱い、タイムゾーンの影響を受けない。
+ * 「N年目」は入社年月（"YYYY-MM"）から12か月ごとに区切る。入社年月より前は「入社前」（0年目）。
+ *
+ * 「今月」は、呼び出し側が端末のローカル日付から monthIndex(年, 月) で作って渡す。
+ * （保存用の日時は UTC なので、日本時間の毎月1日0〜9時は UTC ではまだ前の月になる。日時から今月を作らないこと）
+ */
+
+const PARTIAL_RE = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/;
+const LOOSE_PARTIAL_RE = /^(\d{4})(?:-(\d{1,2})(?:-(\d{1,2}))?)?$/;
+const YEAR_MONTH_RE = /^(\d{4})-(\d{2})$/;
+const YEAR_MIN = 1900;
+const YEAR_MAX = 2199;
+
+/** その月の日数 */
+function daysInMonth(y, m) {
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+/**
+ * 精度つき日付を読む。読めなければ null（空文字も null）。
+ * @param {unknown} s
+ * @returns {{y:number, m:number|null, d:number|null, precision:"year"|"month"|"day"} | null}
+ */
+function parsePartialDate(s) {
+  if (typeof s !== "string") return null;
+  const mt = PARTIAL_RE.exec(s);
+  if (!mt) return null;
+  const y = Number(mt[1]);
+  if (y < YEAR_MIN || y > YEAR_MAX) return null;
+  if (mt[2] === undefined) return { y, m: null, d: null, precision: "year" };
+  const m = Number(mt[2]);
+  if (m < 1 || m > 12) return null;
+  if (mt[3] === undefined) return { y, m, d: null, precision: "month" };
+  const d = Number(mt[3]);
+  if (d < 1 || d > daysInMonth(y, m)) return null;
+  return { y, m, d, precision: "day" };
+}
+
+/** 精度つき日付として正しいか（空文字は false） */
+function isPartialDate(s) {
+  return parsePartialDate(s) !== null;
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+/**
+ * 手で書いた日付を、精度つき日付の形に直す。直せなければ null。
+ * 全角数字、区切りの「/」「.」「ー」などの横線、「年・月・日」、1桁の月・日を受け付ける。
+ * 例: "２０２２/４" → "2022-04"、"2024年6月5日" → "2024-06-05"、"２０２４ー０６" → "2024-06"
+ */
+function repairPartialDate(s) {
+  if (typeof s !== "string") return null;
+  const t = s
+    .normalize("NFKC")
+    .trim()
+    .replace(/[/.ー−‐‑‒–—―﹣]/g, "-")
+    .replace(/[年月]/g, "-")
+    .replace(/日$/, "")
+    .replace(/-+$/, "");
+  const mt = LOOSE_PARTIAL_RE.exec(t);
+  if (!mt) return null;
+  let out = mt[1];
+  if (mt[2] !== undefined) out += "-" + pad2(Number(mt[2]));
+  if (mt[3] !== undefined) out += "-" + pad2(Number(mt[3]));
+  return isPartialDate(out) ? out : null;
+}
+
+/**
+ * 精度つき日付が指しうる最初の日と最後の日（"YYYY-MM-DD"）。読めなければ null。
+ * 例: "2024" → { first: "2024-01-01", last: "2024-12-31" }
+ */
+function dayBounds(s) {
+  const p = parsePartialDate(s);
+  if (!p) return null;
+  if (p.precision === "year") return { first: `${p.y}-01-01`, last: `${p.y}-12-31` };
+  const ym = `${p.y}-${pad2(p.m)}`;
+  if (p.precision === "month") return { first: `${ym}-01`, last: `${ym}-${pad2(daysInMonth(p.y, p.m))}` };
+  const day = `${ym}-${pad2(p.d)}`;
+  return { first: day, last: day };
+}
+
+/** 月番号（年×12＋月−1） */
+function monthIndex(y, m) {
+  return y * 12 + (m - 1);
+}
+
+/** 月番号 → "YYYY-MM" */
+function ymOfIndex(idx) {
+  const y = Math.floor(idx / 12);
+  const m = idx - y * 12 + 1;
+  return `${y}-${pad2(m)}`;
+}
+
+/**
+ * 精度つき日付が指しうる最初の月と最後の月（月番号）。読めなければ null。
+ * 例: "2024" → 2024年1月〜12月、"2024-06-15" → 2024年6月〜6月
+ */
+function monthBounds(s) {
+  const p = parsePartialDate(s);
+  if (!p) return null;
+  if (p.precision === "year") return { from: monthIndex(p.y, 1), to: monthIndex(p.y, 12) };
+  const idx = monthIndex(p.y, p.m);
+  return { from: idx, to: idx };
+}
+
+/**
+ * 終了が開始より前か。精度が違っても、「終了の最後の日」が「開始の最初の日」より前のときだけ true。
+ * どちらかが読めないときは false（判定しない）。
+ */
+function isEndBeforeStart(start, end) {
+  const a = dayBounds(start);
+  const b = dayBounds(end);
+  if (!a || !b) return false;
+  return b.last < a.first;
+}
+
+/**
+ * 並べ替え用の比較。最初の日 → 精度の粗い順 の順に比べる。読めない日付（空文字を含む）は最後。
+ */
+function comparePartialDates(a, b) {
+  const ba = dayBounds(a);
+  const bb = dayBounds(b);
+  if (!ba && !bb) return 0;
+  if (!ba) return 1;
+  if (!bb) return -1;
+  if (ba.first !== bb.first) return ba.first < bb.first ? -1 : 1;
+  if (a.length !== b.length) return a.length < b.length ? -1 : 1;
+  return 0;
+}
+
+/** "YYYY-MM"（入社年月など）を読む。読めなければ null */
+function parseYearMonth(s) {
+  if (typeof s !== "string") return null;
+  const mt = YEAR_MONTH_RE.exec(s);
+  if (!mt) return null;
+  const y = Number(mt[1]);
+  const m = Number(mt[2]);
+  if (y < YEAR_MIN || y > YEAR_MAX || m < 1 || m > 12) return null;
+  return { y, m };
+}
+
+/** "YYYY-MM" として正しいか */
+function isYearMonth(s) {
+  return parseYearMonth(s) !== null;
+}
+
+/** 手で書いた年月を "YYYY-MM" に直す。直せなければ null。例: "2023/4" → "2023-04" */
+function repairYearMonth(s) {
+  const r = repairPartialDate(s);
+  return r !== null && isYearMonth(r) ? r : null;
+}
+
+/** "YYYY-MM" の月番号。読めなければ null */
+function monthIndexOfYearMonth(s) {
+  const p = parseYearMonth(s);
+  return p ? monthIndex(p.y, p.m) : null;
+}
+
+/**
+ * ある月が「何年目」か。入社年月より前は 0（入社前）。入社年月が読めなければ null。
+ * @param {string} joinedAt  入社年月 "YYYY-MM"
+ * @param {number} idx  月番号
+ */
+function serviceYearOfMonth(joinedAt, idx) {
+  const j = monthIndexOfYearMonth(joinedAt);
+  if (j === null || !Number.isInteger(idx)) return null;
+  if (idx < j) return 0;
+  return Math.floor((idx - j) / 12) + 1;
+}
+
+/**
+ * N年目の期間（"YYYY-MM"〜"YYYY-MM"）。入社年月が読めない、または N が1未満なら null。
+ * 例: 入社 "2023-04" の2年目 → { start: "2024-04", end: "2025-03" }
+ */
+function serviceYearRange(joinedAt, n) {
+  const j = monthIndexOfYearMonth(joinedAt);
+  if (j === null || !Number.isInteger(n) || n < 1) return null;
+  const from = j + 12 * (n - 1);
+  return { start: ymOfIndex(from), end: ymOfIndex(from + 11) };
+}
+
+/** 「入社前」の最後の月（入社年月の前の月）。入社年月が読めなければ null */
+function beforeJoinEnd(joinedAt) {
+  const j = monthIndexOfYearMonth(joinedAt);
+  return j === null ? null : ymOfIndex(j - 1);
+}
+
+/**
+ * 経験の期間を月番号で返す（予定の未来の月も含む。今月で切るときは clipSpan を使う）。開始が読めなければ null。
+ * - 終了が読めればその最後の月
+ * - 終了が無く継続中なら「今月」（currentIdx。開始より前なら開始の最初の月）
+ * - どちらでもなければ開始の最後の月（"2024" なら12月まで）
+ * @param {{start:string, end:string, ongoing:boolean}} exp
+ * @param {number} currentIdx  今月の月番号
+ */
+function experienceMonthSpan(exp, currentIdx) {
+  const s = monthBounds(exp && exp.start);
+  if (!s) return null;
+  const e = monthBounds(exp.end);
+  let to;
+  if (e) to = e.to;
+  else if (exp.ongoing) to = Number.isInteger(currentIdx) ? Math.max(currentIdx, s.from) : s.to;
+  else to = s.to;
+  if (to < s.from) to = s.from;
+  return { from: s.from, to };
+}
+
+/** 期間を maxIdx（今月など）までで切る。全部が maxIdx より後なら null */
+function clipSpan(span, maxIdx) {
+  if (!span) return null;
+  if (span.from > maxIdx) return null;
+  return { from: span.from, to: Math.min(span.to, maxIdx) };
+}
+
+/** 期間 span と、列（from〜to の月番号）が重なる月数 */
+function overlapMonths(span, from, to) {
+  if (!span) return 0;
+  const a = Math.max(span.from, from);
+  const b = Math.min(span.to, to);
+  return b >= a ? b - a + 1 : 0;
+}
+
+const ISO_TS_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+const TS_IN_RE = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|[+-]\d{2}:?\d{2}))?$/;
+
+/** 保存データの日時（toISOString() の形 "YYYY-MM-DDTHH:mm:ss.sssZ"）として正しいか */
+function isIsoTimestamp(s) {
+  return typeof s === "string" && ISO_TS_RE.test(s) && canonicalTimestamp(s) === s;
+}
+
+/**
+ * 日時の文字列を toISOString() の形にそろえる。読めなければ null。
+ * 受け付けるのは、時差（Z か ±hh:mm）つきの日時と、日付だけ（UTC の0時とみなす）。
+ * 時差の無い日時は、端末のタイムゾーンで意味が変わるので読まない。存在しない日時（2月30日など）も読まない。
+ * 例: "2026-10-01T09:00:00+09:00" → "2026-10-01T00:00:00.000Z"
+ */
+function canonicalTimestamp(s) {
+  if (typeof s !== "string") return null;
+  const mt = TS_IN_RE.exec(s);
+  if (!mt) return null;
+  const y = Number(mt[1]);
+  const mo = Number(mt[2]);
+  const d = Number(mt[3]);
+  if (y < YEAR_MIN || y > YEAR_MAX || mo < 1 || mo > 12 || d < 1 || d > daysInMonth(y, mo)) return null;
+  let h = 0;
+  let mi = 0;
+  let sec = 0;
+  let ms = 0;
+  let offsetMin = 0;
+  if (mt[4] !== undefined) {
+    h = Number(mt[4]);
+    mi = Number(mt[5]);
+    sec = mt[6] !== undefined ? Number(mt[6]) : 0;
+    ms = mt[7] !== undefined ? Number(mt[7].slice(0, 3).padEnd(3, "0")) : 0;
+    if (h > 23 || mi > 59 || sec > 59) return null;
+    const z = mt[8];
+    if (z !== "Z") {
+      const sign = z[0] === "-" ? -1 : 1;
+      const digits = z.slice(1).replace(":", "");
+      const oh = Number(digits.slice(0, 2));
+      const om = Number(digits.slice(2, 4));
+      if (oh > 23 || om > 59) return null;
+      offsetMin = sign * (oh * 60 + om);
+    }
+  }
+  const t = Date.UTC(y, mo - 1, d, h, mi, sec, ms) - offsetMin * 60000;
+  if (!Number.isFinite(t)) return null;
+  const out = new Date(t);
+  // 時差を引いた結果も、読める年の範囲に収める（収めないと、2回目の正規化で読めなくなる）
+  if (out.getUTCFullYear() < YEAR_MIN || out.getUTCFullYear() > YEAR_MAX) return null;
+  return out.toISOString();
+}
+__export(__exports, { "daysInMonth": () => daysInMonth, "parsePartialDate": () => parsePartialDate, "isPartialDate": () => isPartialDate, "repairPartialDate": () => repairPartialDate, "dayBounds": () => dayBounds, "monthIndex": () => monthIndex, "ymOfIndex": () => ymOfIndex, "monthBounds": () => monthBounds, "isEndBeforeStart": () => isEndBeforeStart, "comparePartialDates": () => comparePartialDates, "parseYearMonth": () => parseYearMonth, "isYearMonth": () => isYearMonth, "repairYearMonth": () => repairYearMonth, "monthIndexOfYearMonth": () => monthIndexOfYearMonth, "serviceYearOfMonth": () => serviceYearOfMonth, "serviceYearRange": () => serviceYearRange, "beforeJoinEnd": () => beforeJoinEnd, "experienceMonthSpan": () => experienceMonthSpan, "clipSpan": () => clipSpan, "overlapMonths": () => overlapMonths, "isIsoTimestamp": () => isIsoTimestamp, "canonicalTimestamp": () => canonicalTimestamp });
+});
+__define("core/ids.js", function (__exports, __require) {
+"use strict";
+/*
+ * ID の生成と判定（DOM非依存）
+ *
+ * ID は「接頭辞_時刻(36進)_乱数8桁」。例: exp_mg7x2k1a_4f9z2qk0
+ * 端末をまたいでも重ならないよう、時刻と乱数を組み合わせる。
+ * 純粋関数に保つため、時刻と乱数は呼び出し側から渡す。
+ *
+ * 経験と能力の紐付け・能力どうしの関連は、つなぐ2つのIDから ID を決める（linkId / capRelationId）。
+ * 同じ組は必ず同じ ID になるので、2つの端末で別々に作っても、同期のときに1件にまとまる。
+ */
+
+const ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
+const RANDOM_LENGTH = 8;
+/** 接頭辞（小文字3文字）＋「_」＋英数字・_・-。全体で255文字以内（組から決めるIDが収まる長さ） */
+const ID_RE = /^[a-z]{3}_[A-Za-z0-9_-]{1,251}$/;
+
+/**
+ * ID を作る。
+ * @param {string} prefix  接頭辞（constants.js の ID_PREFIX）
+ * @param {number} nowMs   現在時刻（ミリ秒）
+ * @param {() => number} random  0以上1未満の数を返す関数
+ * @returns {string}
+ */
+function makeId(prefix, nowMs, random) {
+  if (typeof prefix !== "string" || !/^[a-z]{3}$/.test(prefix)) {
+    throw new Error(`IDの接頭辞が不正です: ${prefix}`);
+  }
+  if (!Number.isFinite(nowMs) || nowMs < 0) {
+    throw new Error(`IDの時刻が不正です: ${nowMs}`);
+  }
+  let rand = "";
+  for (let i = 0; i < RANDOM_LENGTH; i++) {
+    const r = random();
+    if (!(r >= 0 && r < 1)) throw new Error(`乱数が0以上1未満ではありません: ${r}`);
+    rand += ALPHABET[Math.floor(r * ALPHABET.length)];
+  }
+  return `${prefix}_${Math.floor(nowMs).toString(36)}_${rand}`;
+}
+
+/** 保存データ上の ID として受け付けられる文字列か（接頭辞3文字_英数字・_・-、255文字以内） */
+function isIdLike(value) {
+  return typeof value === "string" && ID_RE.test(value);
+}
+
+/**
+ * 経験と能力の紐付けの ID（経験×能力の組から決まる）。
+ * ID の中にも「_」が入るので、1つ目の ID の長さを前に付けて、別の組が同じ ID にならないようにする。
+ * 例: linkId("exp_a", "cap_b") → "lnk_5_exp_a_cap_b"
+ */
+function linkId(experienceId, capabilityId) {
+  return `lnk_${experienceId.length}_${experienceId}_${capabilityId}`;
+}
+
+/** 能力どうしの関連は、2つのIDを小さい順に並べて持つ */
+function orderedPair(a, b) {
+  return a <= b ? [a, b] : [b, a];
+}
+
+/** 能力どうしの関連の ID（並べ替えた組から決まる。linkId と同じく、1つ目の長さを前に付ける） */
+function capRelationId(aId, bId) {
+  const [x, y] = orderedPair(aId, bId);
+  return `crl_${x.length}_${x}_${y}`;
+}
+
+/**
+ * 実行環境の乱数源から random 関数を作る。ブラウザと Node の両方で使える crypto を優先する。
+ * テストでは使わず、決まった値を返す関数を渡すこと。
+ * @returns {() => number}
+ */
+function cryptoRandom() {
+  const c = globalThis.crypto;
+  if (c && typeof c.getRandomValues === "function") {
+    const buf = new Uint32Array(1);
+    return () => {
+      c.getRandomValues(buf);
+      return buf[0] / 4294967296;
+    };
+  }
+  return Math.random;
+}
+
+/**
+ * ID生成関数を作る。正規化や画面から newId("exp") の形で使う。
+ * @param {() => number} nowMsFn  現在時刻（ミリ秒）を返す関数
+ * @param {() => number} random
+ * @returns {(prefix: string) => string}
+ */
+function idFactory(nowMsFn, random) {
+  return (prefix) => makeId(prefix, nowMsFn(), random);
+}
+__export(__exports, { "makeId": () => makeId, "isIdLike": () => isIdLike, "linkId": () => linkId, "orderedPair": () => orderedPair, "capRelationId": () => capRelationId, "cryptoRandom": () => cryptoRandom, "idFactory": () => idFactory });
+});
+__define("core/migrate.js", function (__exports, __require) {
+"use strict";
+/*
+ * データバージョンの移行（DOM非依存・純粋関数）
+ *
+ * MIGRATIONS[n] は、データバージョン n の data（保存JSONの data 部分）を n+1 の形に変える関数。
+ * 入力は書き換えず、新しいオブジェクトを返すこと。
+ *
+ * 移行を足すときの決まり:
+ *   1. constants.js の SCHEMA_VERSION を上げる
+ *   2. ここに MIGRATIONS[旧版] を足す
+ *   3. 旧版の見本 test/fixtures/v{旧版}-sample.json は消さずに残し、最新版へ移行できることをテストする
+ * 移行の後には必ず normalizeData を通す（移行関数は形を変えるだけでよい）。
+ */
+
+const { SCHEMA_VERSION } = __require("core/constants.js");
+const { safeText } = __require("core/normalize.js");
+
+/** @type {Readonly<Record<number, (data: any) => any>>} */
+const MIGRATIONS = Object.freeze({});
+
+/**
+ * fromVersion の data を toVersion の形にする。
+ * @returns {{ok: true, data: any, steps: number[]} | {ok: false, error: {code: string, message: string}}}
+ */
+function migrateData(data, fromVersion, { migrations = MIGRATIONS, toVersion = SCHEMA_VERSION } = {}) {
+  if (!Number.isInteger(fromVersion) || fromVersion < 1) {
+    return { ok: false, error: { code: "badVersion", message: `データバージョン「${safeText(fromVersion)}」が読めません` } };
+  }
+  if (fromVersion > toVersion) {
+    return {
+      ok: false,
+      error: {
+        code: "newerVersion",
+        message: `このデータは、より新しい版のアプリ（データバージョン${fromVersion}）で作られています。アプリを更新してから開いてください`,
+      },
+    };
+  }
+  let cur = data;
+  const steps = [];
+  for (let v = fromVersion; v < toVersion; v++) {
+    const fn = migrations[v];
+    if (typeof fn !== "function") {
+      return { ok: false, error: { code: "migrationMissing", message: `データバージョン${v}からの移行手順がありません` } };
+    }
+    try {
+      cur = fn(cur);
+    } catch (e) {
+      return {
+        ok: false,
+        error: { code: "migrationFailed", message: `データバージョン${v}からの移行に失敗しました: ${safeText(e && e.message ? e.message : e)}` },
+      };
+    }
+    steps.push(v);
+  }
+  return { ok: true, data: cur, steps };
+}
+__export(__exports, { "MIGRATIONS": () => MIGRATIONS, "migrateData": () => migrateData });
+});
+__define("core/model.js", function (__exports, __require) {
+"use strict";
+/*
+ * データモデルの型と、新しいデータを作る関数（DOM非依存・純粋関数）
+ *
+ * 型は JSDoc で書く（TypeScript へ移すときの下敷き）。値の形の正は schema.js。
+ */
+
+const { COLLECTIONS, DERIVED_ID_COLLECTIONS, ID_PREFIX } = __require("core/constants.js");
+const { capRelationId, isIdLike, linkId, orderedPair } = __require("core/ids.js");
+const { createReport, defaultSettings, emptyData, normalizeRow } = __require("core/normalize.js");
+const { SCHEMA, defaultValue } = __require("core/schema.js");
+
+/**
+ * @typedef {string} PartialDate  精度つき日付 "YYYY" | "YYYY-MM" | "YYYY-MM-DD" | ""
+ * @typedef {string} IsoTimestamp 日時 toISOString() の形
+ *
+ * @typedef {object} Common
+ * @property {string} id
+ * @property {IsoTimestamp} createdAt  記録日時
+ * @property {IsoTimestamp} updatedAt  更新日時（端末間の同期で、新しい方を採るのに使う）
+ * @property {IsoTimestamp|null} deletedAt  削除の記録。null なら生きている
+ *
+ * @typedef {Common & {
+ *   name: string, publicName: string, start: PartialDate, end: PartialDate, note: string
+ * }} Project  プロジェクト。publicName は社外向けの呼び方（AIへ送るとき・職務経歴書で使う）
+ *
+ * @typedef {Common & {
+ *   parentId: string|null, projectId: string|null, title: string,
+ *   start: PartialDate, end: PartialDate, ongoing: boolean,
+ *   categories: string[], phases: string[], role: string, roleNote: string,
+ *   techs: string[], tags: string[], inbox: boolean, memo: string,
+ *   content: {background:string, problem:string, issue:string, thinking:string, action:string,
+ *             result:string, learned:string, failed:string, improved:string},
+ *   meaning: {internal:string, technical:string, problemSolving:string}
+ * }} Experience  経験。parentId は大まかな経験（親子は1階層まで）。inbox は未整理
+ *
+ * @typedef {Common & {
+ *   name: string, category: string, description: string, aliases: string[], archived: boolean
+ * }} Capability  能力。category は能力カテゴリ
+ *
+ * @typedef {Common & { aId: string, bId: string, note: string }} CapRelation
+ *   能力どうしの関連（関連する能力）。aId < bId。ID は capRelationId(aId, bId)
+ *
+ * @typedef {Common & {
+ *   experienceId: string, capabilityId: string, note: string,
+ *   state: "confirmed"|"candidate", source: "self"|"nameMatch"|"nextExperience"|"ai"
+ * }} ExpCapLink  経験と能力の紐付け。ID は linkId(experienceId, capabilityId)。
+ *   候補（candidate）は確定するまで集計や根拠に入らない
+ *
+ * @typedef {Common & {
+ *   capabilityId: string, date: PartialDate, level: number, reason: string, experienceIds: string[]
+ * }} Assessment  自己評価。date は評価の時点（過去を振り返って付けてもよい）
+ *
+ * @typedef {Common & {
+ *   experienceId: string, type: string, title: string, url: string, text: string, date: PartialDate,
+ *   status: "planned"|"done", disclosure: "public"|"describable"|"internal"
+ * }} Evidence  status は予定／済、disclosure は提示可／説明のみ／社内限り
+ *
+ * @typedef {Common & { fromId: string, toId: string, note: string }} ExpRelation  経験どうしの関連
+ *
+ * @typedef {Common & {
+ *   title: string, desiredState: string, detail: string,
+ *   targets: {capabilityId: string, targetLevel: number|null}[],
+ *   status: "open"|"resolved"|"onHold"
+ * }} Gap  desiredState は目指す状態
+ *
+ * @typedef {Common & {
+ *   title: string, why: string, gapIds: string[], capabilityIds: string[], plannedEvidence: string[],
+ *   when: PartialDate, status: "considering"|"planned"|"inProgress"|"done"|"dropped",
+ *   resultExperienceId: string|null
+ * }} NextExperience  resultExperienceId は「経験として記録」した先
+ *
+ * @typedef {object} Settings
+ * @property {string} joinedAt  入社年月 "YYYY-MM" か ""
+ * @property {{categories:string[], phases:string[], roles:string[], evidenceTypes:string[], capabilityCategories:string[]}} lists  選択肢
+ * @property {{from:string, to:string}[]} replacements  置換リスト（AIへ送る前に固有名詞を伏せる）
+ * @property {IsoTimestamp} updatedAt
+ *
+ * @typedef {object} CareerData  保存JSONの data 部分
+ * @property {Settings} settings
+ * @property {Project[]} projects
+ * @property {Experience[]} experiences
+ * @property {Capability[]} capabilities
+ * @property {CapRelation[]} capRelations
+ * @property {ExpCapLink[]} expCapLinks
+ * @property {Assessment[]} assessments
+ * @property {Evidence[]} evidences
+ * @property {ExpRelation[]} expRelations
+ * @property {Gap[]} gaps
+ * @property {NextExperience[]} nextExperiences
+ */
+
+
+
+function hasOwn(o, k) {
+  return Object.prototype.hasOwnProperty.call(o, k);
+}
+
+/**
+ * 新しいデータを1件作る。値が不正なら例外を投げる（画面側の不具合を早く見つけるため）。
+ * - 内容・意味づけ（content / meaning）は、渡した項目だけを上書きする
+ * - 紐付け・能力どうしの関連は、ID を渡さなくてよい（つなぐ2つの ID から決める）。能力どうしの関連は2つを並べ替える
+ * @param {string} collection  コレクション名（"experiences" など）
+ * @param {{id?:string, now:string}} meta  ID と記録日時
+ * @param {object} [fields]  初期値
+ */
+function createEntity(collection, { id, now }, fields = {}) {
+  const spec = SCHEMA[collection];
+  if (!spec) throw new Error(`未知のコレクションです: ${collection}`);
+  for (const k of Object.keys(fields)) {
+    if (!hasOwn(spec, k)) throw new Error(`${collection} に項目「${k}」はありません`);
+  }
+  for (const [k, fs] of Object.entries(spec)) {
+    if (fs.kind === "ref" && fs.required && !isIdLike(fields[k])) {
+      throw new Error(`${collection} の ${k} にはIDが必要です: ${String(fields[k])}`);
+    }
+  }
+  const values = { ...fields };
+  if (collection === "capRelations") {
+    if (values.aId === values.bId) throw new Error("同じ能力どうしは関連づけられません");
+    [values.aId, values.bId] = orderedPair(values.aId, values.bId);
+  }
+  let rowId = id;
+  if (DERIVED_ID_COLLECTIONS.includes(collection)) {
+    const did = collection === "expCapLinks" ? linkId(values.experienceId, values.capabilityId) : capRelationId(values.aId, values.bId);
+    if (!isIdLike(did)) throw new Error(`${collection} のIDが長すぎて作れません: ${did}`);
+    if (id !== undefined && id !== did) throw new Error(`${collection} のIDは ${did} になります: ${id}`);
+    rowId = did;
+  } else if (typeof id !== "string" || !id.startsWith(ID_PREFIX[collection] + "_") || !isIdLike(id)) {
+    throw new Error(`${collection} のIDは「${ID_PREFIX[collection]}_」で始めてください: ${id}`);
+  }
+  const raw = {};
+  for (const [k, fs] of Object.entries(spec)) {
+    const def = defaultValue(fs);
+    if (fs.kind === "group") raw[k] = { ...def, ...(values[k] || {}) };
+    else raw[k] = hasOwn(values, k) ? values[k] : def;
+  }
+  raw.createdAt = now;
+  raw.updatedAt = now;
+  raw.deletedAt = null;
+  const report = createReport();
+  const e = normalizeRow(collection, raw, { id: rowId, now, report });
+  if (!e || report.items.length > 0) {
+    throw new Error(`作るデータの値が不正です: ${report.items.map((i) => i.message).join(" / ")}`);
+  }
+  return e;
+}
+
+/** コレクション名の一覧（保存JSONの並び順） */
+function collectionNames() {
+  return [...COLLECTIONS];
+}
+__export(__exports, { "defaultSettings": () => defaultSettings, "emptyData": () => emptyData, "createEntity": () => createEntity, "collectionNames": () => collectionNames });
+});
+__define("core/normalize.js", function (__exports, __require) {
+"use strict";
+/*
+ * 正規化と整合チェック（DOM非依存・純粋関数）
+ *
+ * 外から来たデータ（保存データ・読み込んだJSON・旧版・手で編集したもの・壊れたもの）を、
+ * schema.js の形にそろえる。入力は書き換えず、新しいオブジェクトを返す。
+ * 同じ入力と同じ now・newId なら、配列の並びが違っても同じ結果になるようにする（同期で2台の結果をそろえるため）。
+ *
+ * 2段に分ける（端末間のマージは「形 → マージ → 整合」の順に使う）:
+ *   normalizeShape   1件ずつの形をそろえる。ID を決める。設定をそろえる
+ *   applyIntegrity   データ全体の参照をそろえる（参照先が無いものを外す、親子を1階層にする）
+ *   normalizeData    上の2つを続けて行う
+ *
+ * 方針: 黙って直さない。直した・捨てたものは、すべて報告（report.items）に残す。
+ *   level "fix"   値を直した（情報は失っていない。形を整えた、欠けを既定値で補った など）
+ *   level "drop"  空でない値やデータを捨てた（元の値は before に一部を残す）
+ *   level "error" 安全に読み込めない問題がある
+ *   level "info"  お知らせ（移行したなど）
+ * 呼び出し側の約束:
+ *   - error があれば、元のデータを上書きしない（自動保存を止める）
+ *   - drop か error があれば（needsBackup）、保存の前に元のデータを退避用の保存キーに残す
+ * 正規化で値を直しても updatedAt は上げない（上げると、別の端末での新しい編集に勝ってしまうため）。
+ */
+
+const { COLLECTIONS, COLLECTION_LABELS, CONTENT_FIELDS, DEFAULT_LISTS, DERIVED_ID_COLLECTIONS, ENUMS, ENUM_REPAIR_DEFAULTS, FIELD_LABELS, ID_PREFIX, LEVEL_MAX, LEVEL_MIN, LIST_LABELS, LOCKED_LABELS, MEANING_FIELDS } = __require("core/constants.js");
+const { canonicalTimestamp, isEndBeforeStart, isPartialDate, isYearMonth, repairPartialDate, repairYearMonth } = __require("core/dates.js");
+const { capRelationId, isIdLike, linkId, orderedPair } = __require("core/ids.js");
+const { SCHEMA, entityKeys } = __require("core/schema.js");
+
+const SUBFIELD_LABELS = Object.freeze(Object.fromEntries([...CONTENT_FIELDS, ...MEANING_FIELDS]));
+const PREVIEW_MAX = 200;
+const NAME_MAX = 30;
+const SETTINGS_KEYS = Object.freeze(["joinedAt", "lists", "replacements", "updatedAt"]);
+
+/* ---------- 報告 ---------- */
+
+function createReport() {
+  return { items: [] };
+}
+
+/** error があるか（あれば、元のデータを上書きしない） */
+function hasErrors(report) {
+  return report.items.some((i) => i.level === "error");
+}
+
+/** drop か error があるか（あれば、保存の前に元のデータを退避する） */
+function needsBackup(report) {
+  return report.items.some((i) => i.level === "drop" || i.level === "error");
+}
+
+/** level ごとの件数 */
+function countByLevel(report) {
+  const c = { info: 0, fix: 0, drop: 0, error: 0 };
+  for (const i of report.items) c[i.level] = (c[i.level] || 0) + 1;
+  return c;
+}
+
+/** どんな値でも例外を出さずに文字にする（報告・メッセージ用） */
+function safeText(v) {
+  if (typeof v === "string") return v;
+  if (v === undefined) return "(なし)";
+  try {
+    const s = JSON.stringify(v);
+    if (typeof s === "string") return s;
+  } catch {
+    /* 深い入れ子など。下で別の方法を試す */
+  }
+  try {
+    return String(v);
+  } catch {
+    return "(表示できない値)";
+  }
+}
+
+function preview(value) {
+  const s = value === undefined ? "(なし)" : typeof value === "string" ? JSON.stringify(value) : safeText(value);
+  return s.length > PREVIEW_MAX ? s.slice(0, PREVIEW_MAX) + "…" : s;
+}
+
+function push(report, level, code, ctx, message, before) {
+  const item = {
+    level,
+    code,
+    collection: ctx.collection ?? null,
+    id: ctx.id ?? null,
+    field: ctx.field ?? null,
+    message,
+  };
+  if (before !== undefined) item.before = preview(before);
+  report.items.push(item);
+}
+
+/* ---------- 小道具 ---------- */
+
+function isPlainObject(v) {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+function hasOwn(o, k) {
+  return Object.prototype.hasOwnProperty.call(o, k);
+}
+
+function shortName(v) {
+  if (typeof v !== "string") return "";
+  const t = v.trim();
+  return t.length > NAME_MAX ? t.slice(0, NAME_MAX) + "…" : t;
+}
+
+/** 報告の文中でデータを指す呼び方。例: 経験「新人研修の設計」 */
+function describe(ctx) {
+  if (ctx.collection === "settings") return "設定";
+  const label = COLLECTION_LABELS[ctx.collection] || ctx.collection;
+  if (ctx.name) return `${label}「${ctx.name}」`;
+  if (ctx.id) return `${label}（${ctx.id}）`;
+  return `${label}（${ctx.index + 1}件目）`;
+}
+
+function fieldLabel(key) {
+  return FIELD_LABELS[key] || SUBFIELD_LABELS[key] || key;
+}
+
+function isNumberLike(v) {
+  return (typeof v === "number" && Number.isFinite(v)) || (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v)));
+}
+
+function toLevel(v) {
+  return Math.min(LEVEL_MAX, Math.max(LEVEL_MIN, Math.round(Number(v))));
+}
+
+/** ID らしい値を文字にする（参照の付け替えに使う）。文字・有限の数以外は null */
+function rawIdKey(v) {
+  if (typeof v === "string") return v === "" ? null : v;
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  return null;
+}
+
+/* ---------- 値ごとの正規化 ---------- */
+
+/**
+ * 1つの値を spec の種類にそろえる。直したときは note(level, code, message, before) を呼ぶ。
+ * @returns {{value: unknown} | {dropRow: true, code: string, message: string}}
+ */
+function normalizeValue(spec, v, d, f, note, resolveRef) {
+  const missing = () => note("fix", "missingField", `${d}の${f}が無かったので、既定値を入れました`, v);
+  const nulled = () => note("fix", "nullToDefault", `${d}の${f}が空（null）だったので、既定値を入れました`, v);
+  switch (spec.kind) {
+    case "str": {
+      if (typeof v === "string") return { value: v };
+      if (v === undefined) return missing(), { value: "" };
+      if (v === null) return nulled(), { value: "" };
+      if ((typeof v === "number" && Number.isFinite(v)) || typeof v === "boolean") {
+        note("fix", "coerced", `${d}の${f}を文字に直しました`, v);
+        return { value: String(v) };
+      }
+      note("drop", "invalidValue", `${d}の${f}が文字として読めなかったので、捨てて空にしました`, v);
+      return { value: "" };
+    }
+    case "bool": {
+      if (v === true || v === false) return { value: v };
+      if (v === "true" || v === "false") {
+        note("fix", "coerced", `${d}の${f}を真偽値に直しました`, v);
+        return { value: v === "true" };
+      }
+      if (v === undefined) return missing(), { value: false };
+      if (v === null) return nulled(), { value: false };
+      note("drop", "invalidValue", `${d}の${f}が読めなかったので、「いいえ」にしました`, v);
+      return { value: false };
+    }
+    case "pdate": {
+      if (v === "" || isPartialDate(v)) return { value: v };
+      if (v === undefined) return missing(), { value: "" };
+      if (v === null) return nulled(), { value: "" };
+      const r = repairPartialDate(v);
+      if (r !== null) {
+        note("fix", "dateRepaired", `${d}の${f}「${safeText(v)}」を「${r}」に直しました`, v);
+        return { value: r };
+      }
+      note("drop", "invalidDate", `${d}の${f}「${preview(v)}」が日付として読めなかったので、空にしました`, v);
+      return { value: "" };
+    }
+    case "labels": {
+      if (v === undefined) return missing(), { value: [] };
+      if (v === null) return nulled(), { value: [] };
+      if (typeof v === "string") {
+        const t = v.trim();
+        note("fix", "wrappedInList", `${d}の${f}が一覧ではなかったので、1件の一覧にしました`, v);
+        return { value: t === "" ? [] : [t] };
+      }
+      if (!Array.isArray(v)) {
+        note("drop", "invalidValue", `${d}の${f}が一覧として読めなかったので、空にしました`, v);
+        return { value: [] };
+      }
+      const out = [];
+      const seen = new Set();
+      let changed = false;
+      let lost = false;
+      for (const item of v) {
+        let s = null;
+        if (typeof item === "string") s = item;
+        else if (typeof item === "number" && Number.isFinite(item)) {
+          s = String(item);
+          changed = true;
+        } else if (item === null || item === undefined) {
+          changed = true;
+          continue;
+        } else {
+          lost = true;
+          continue;
+        }
+        const t = s.trim();
+        if (t !== s) changed = true;
+        if (t === "" || seen.has(t)) {
+          changed = true;
+          continue;
+        }
+        seen.add(t);
+        out.push(t);
+      }
+      if (lost) note("drop", "labelItemDropped", `${d}の${f}から、文字として読めないものを捨てました`, v);
+      else if (changed) note("fix", "labelsCleaned", `${d}の${f}から、空・重複・前後の空白を取り除きました`, v);
+      return { value: out };
+    }
+    case "ref": {
+      if (v === null) return { value: null };
+      if (v === undefined) return missing(), { value: null };
+      const r = resolveRef(spec.to, v);
+      if (r.how === "ok") return { value: r.id };
+      if (r.how === "remapped") {
+        note("fix", "refRemapped", `${d}の${f}を、付け直したID（${r.id}）に付け替えました`, v);
+        return { value: r.id };
+      }
+      note("drop", "refInvalid", `${d}の${f}がIDとして読めなかったので、外しました`, v);
+      return { value: null };
+    }
+    case "refs": {
+      if (v === undefined) return missing(), { value: [] };
+      if (v === null) return nulled(), { value: [] };
+      if (!Array.isArray(v)) {
+        note("drop", "invalidValue", `${d}の${f}が一覧として読めなかったので、空にしました`, v);
+        return { value: [] };
+      }
+      const out = [];
+      const seen = new Set();
+      let changed = false;
+      let lost = false;
+      for (const item of v) {
+        if (item === null || item === undefined) {
+          changed = true;
+          continue;
+        }
+        const r = resolveRef(spec.to, item);
+        if (r.how === "invalid") {
+          lost = true;
+          continue;
+        }
+        if (r.how === "remapped") changed = true;
+        if (seen.has(r.id)) {
+          changed = true;
+          continue;
+        }
+        seen.add(r.id);
+        out.push(r.id);
+      }
+      if (lost) note("drop", "refsInvalid", `${d}の${f}から、IDとして読めないものを外しました`, v);
+      else if (changed) note("fix", "refsCleaned", `${d}の${f}の重複・空を整理し、付け直したIDに付け替えました`, v);
+      return { value: out };
+    }
+    case "enum": {
+      const map = ENUMS[spec.name];
+      const def = ENUM_REPAIR_DEFAULTS[spec.name];
+      if (typeof v === "string" && hasOwn(map, v)) return { value: v };
+      const byLabel = Object.keys(map).find((k) => map[k] === v);
+      if (byLabel) {
+        note("fix", "enumLabel", `${d}の${f}を、表示名「${v}」から保存用の値に直しました`, v);
+        return { value: byLabel };
+      }
+      if (v === undefined) {
+        note("fix", "missingField", `${d}の${f}が無かったので、「${map[def]}」にしました`, v);
+        return { value: def };
+      }
+      if (v === null) {
+        note("fix", "nullToDefault", `${d}の${f}が空（null）だったので、「${map[def]}」にしました`, v);
+        return { value: def };
+      }
+      note("drop", "invalidValue", `${d}の${f}「${preview(v)}」が読めなかったので、「${map[def]}」にしました`, v);
+      return { value: def };
+    }
+    case "level": {
+      if (!isNumberLike(v)) {
+        return { dropRow: true, code: "levelInvalid", message: `${d}のレベルが読めなかったので、このデータを捨てました` };
+      }
+      const r = toLevel(v);
+      if (r !== v) note("fix", "levelFixed", `${d}のレベルを${r}に直しました`, v);
+      return { value: r };
+    }
+    case "group": {
+      const out = {};
+      for (const k of spec.keys) out[k] = "";
+      if (v === undefined) return missing(), { value: out };
+      if (v === null) return nulled(), { value: out };
+      if (!isPlainObject(v)) {
+        note("drop", "invalidValue", `${d}の${f}が読めなかったので、捨てて空にしました`, v);
+        return { value: out };
+      }
+      for (const k of spec.keys) {
+        const sub = v[k];
+        const sf = `${f}の${fieldLabel(k)}`;
+        if (typeof sub === "string") out[k] = sub;
+        else if ((typeof sub === "number" && Number.isFinite(sub)) || typeof sub === "boolean") {
+          note("fix", "coerced", `${d}の${sf}を文字に直しました`, sub);
+          out[k] = String(sub);
+        } else if (sub === undefined) {
+          note("fix", "missingField", `${d}の${sf}が無かったので、空にしました`, sub);
+        } else if (sub === null) {
+          note("fix", "nullToDefault", `${d}の${sf}が空（null）だったので、空にしました`, sub);
+        } else {
+          note("drop", "invalidValue", `${d}の${sf}が文字として読めなかったので、捨てて空にしました`, sub);
+        }
+      }
+      for (const k of Object.keys(v)) {
+        if (!spec.keys.includes(k)) note("drop", "unknownField", `${d}の${f}の不明な項目「${k}」を捨てました`, v[k]);
+      }
+      return { value: out };
+    }
+    case "targets": {
+      if (v === undefined) return missing(), { value: [] };
+      if (v === null) return nulled(), { value: [] };
+      if (!Array.isArray(v)) {
+        note("drop", "invalidValue", `${d}の${f}が一覧として読めなかったので、空にしました`, v);
+        return { value: [] };
+      }
+      const out = [];
+      const seen = new Set();
+      let changed = false;
+      let lost = false;
+      for (const item of v) {
+        if (item === null || item === undefined) {
+          changed = true;
+          continue;
+        }
+        if (!isPlainObject(item)) {
+          lost = true;
+          continue;
+        }
+        const r = resolveRef(spec.to, item.capabilityId);
+        if (r.how === "invalid") {
+          lost = true;
+          continue;
+        }
+        if (r.how === "remapped") changed = true;
+        if (seen.has(r.id)) {
+          // 同じ能力が重なったら先の方を残す。目標レベルが違えば、後の方の値を失う
+          const prev = out.find((t) => t.capabilityId === r.id);
+          const tlNow = item.targetLevel === undefined || item.targetLevel === null ? null : isNumberLike(item.targetLevel) ? toLevel(item.targetLevel) : NaN;
+          if (prev.targetLevel !== tlNow) lost = true;
+          else changed = true;
+          continue;
+        }
+        seen.add(r.id);
+        let tl = item.targetLevel;
+        if (tl === undefined) {
+          tl = null;
+          changed = true;
+        } else if (tl !== null) {
+          if (isNumberLike(tl)) {
+            const n = toLevel(tl);
+            if (n !== tl) changed = true;
+            tl = n;
+          } else {
+            tl = null;
+            lost = true;
+          }
+        }
+        if (Object.keys(item).some((k) => k !== "capabilityId" && k !== "targetLevel")) lost = true;
+        out.push({ capabilityId: r.id, targetLevel: tl });
+      }
+      if (lost) note("drop", "targetsDropped", `${d}の${f}から、読めないものを捨てました`, v);
+      else if (changed) note("fix", "targetsCleaned", `${d}の${f}を読める形に整えました`, v);
+      return { value: out };
+    }
+    default:
+      throw new Error(`未知の値の種類です: ${spec.kind}`);
+  }
+}
+
+/* ---------- 日時 ---------- */
+
+function readTimestamp(raw, key, d, ctx, report) {
+  const v = raw[key];
+  const label = fieldLabel(key);
+  if (v === undefined || v === null) return null;
+  const c = canonicalTimestamp(v);
+  if (c) {
+    if (c !== v) push(report, "fix", "timestampFixed", { ...ctx, field: key }, `${d}の${label}を読める形に直しました`, v);
+    return c;
+  }
+  push(report, "drop", "timestampInvalid", { ...ctx, field: key }, `${d}の${label}が読めなかったので、捨てました`, v);
+  return null;
+}
+
+function normalizeTimestamps(raw, ctx, d, report, now) {
+  const fix = (field, code, message, before) => push(report, "fix", code, { ...ctx, field }, message, before);
+  let createdAt = readTimestamp(raw, "createdAt", d, ctx, report);
+  let updatedAt = readTimestamp(raw, "updatedAt", d, ctx, report);
+  if (!createdAt && !updatedAt) {
+    fix("createdAt", "timestampFilled", `${d}の記録日時と更新日時が無かったので、今の日時にしました`, undefined);
+    createdAt = now;
+    updatedAt = now;
+  } else if (!createdAt) {
+    fix("createdAt", "timestampFilled", `${d}の記録日時が無かったので、更新日時と同じにしました`, undefined);
+    createdAt = updatedAt;
+  } else if (!updatedAt) {
+    fix("updatedAt", "timestampFilled", `${d}の更新日時が無かったので、記録日時と同じにしました`, undefined);
+    updatedAt = createdAt;
+  }
+  if (updatedAt < createdAt) {
+    // 更新日時は同期で新しい方を決めるのに使うので動かさず、記録日時の方を合わせる（元の記録日時は失う）
+    push(report, "drop", "timestampOrder", { ...ctx, field: "createdAt" }, `${d}の記録日時が更新日時より後だったので、更新日時に合わせました`, createdAt);
+    createdAt = updatedAt;
+  }
+  let deletedAt = null;
+  if (raw.deletedAt === undefined) {
+    fix("deletedAt", "missingField", `${d}の削除日時が無かったので、削除されていないものとして扱います`, undefined);
+  } else if (raw.deletedAt !== null) {
+    const c = canonicalTimestamp(raw.deletedAt);
+    if (c) {
+      deletedAt = c;
+      if (c !== raw.deletedAt) fix("deletedAt", "timestampFixed", `${d}の削除日時を読める形に直しました`, raw.deletedAt);
+    } else {
+      // 迷ったら消さない
+      push(report, "drop", "deletedAtInvalid", { ...ctx, field: "deletedAt" }, `${d}の削除日時が読めなかったので、削除されていないものとして扱います`, raw.deletedAt);
+    }
+  }
+  if (deletedAt !== null && updatedAt < deletedAt) {
+    fix("updatedAt", "deletedAfterUpdate", `${d}の更新日時が削除日時より前だったので、削除日時に合わせました`, updatedAt);
+    updatedAt = deletedAt;
+  }
+  return { createdAt, updatedAt, deletedAt };
+}
+
+/* ---------- 1件のデータ ---------- */
+
+/** 参照をそのまま受け付ける resolveRef（ID の付け直しが無いとき用） */
+function plainResolveRef(_to, v) {
+  return isIdLike(v) ? { id: v, how: "ok" } : { id: null, how: "invalid" };
+}
+
+/**
+ * 1件のデータの形をそろえる。捨てるときは null。ID は呼び出し側で決めて渡す。
+ * @param {string} collection
+ * @param {object} raw  オブジェクトであること
+ * @param {{id:string, now:string, report:{items:object[]}, resolveRef?:Function, index?:number}} opts
+ */
+function normalizeRow(collection, raw, { id, now, report, resolveRef = plainResolveRef, index = 0 }) {
+  const spec = SCHEMA[collection];
+  if (!spec) throw new Error(`未知のコレクションです: ${collection}`);
+  const ctx = { collection, index, id, name: shortName(raw.title) || shortName(raw.name) };
+  const d = describe(ctx);
+  const row = { id };
+  for (const [key, fs] of Object.entries(spec)) {
+    const note = (level, code, message, before) => push(report, level, code, { ...ctx, field: key }, message, before);
+    const r = normalizeValue(fs, raw[key], d, fieldLabel(key), note, resolveRef);
+    if (r.dropRow) {
+      push(report, "drop", r.code, { ...ctx, field: key }, r.message, raw);
+      return null;
+    }
+    row[key] = r.value;
+  }
+  const known = new Set(entityKeys(collection));
+  for (const k of Object.keys(raw)) {
+    if (!known.has(k)) push(report, "drop", "unknownField", { ...ctx, field: k }, `${d}の不明な項目「${k}」を捨てました`, raw[k]);
+  }
+  Object.assign(row, normalizeTimestamps(raw, ctx, d, report, now));
+
+  // 期間の決まり（終了の検査を先にする。終了を空にしたら継続中は残せる）
+  if ("start" in row && "end" in row && isEndBeforeStart(row.start, row.end)) {
+    push(report, "drop", "endBeforeStart", { ...ctx, field: "end" }, `${d}の終了が開始より前だったので、終了を空にしました`, row.end);
+    row.end = "";
+  }
+  if ("ongoing" in row && row.ongoing && row.end !== "") {
+    push(report, "drop", "ongoingWithEnd", { ...ctx, field: "ongoing" }, `${d}は継続中なのに終了があったので、継続中を外しました（終了の方が具体的なため）`, true);
+    row.ongoing = false;
+  }
+  return row;
+}
+
+/* ---------- 設定 ---------- */
+
+/** 既定の設定 */
+function defaultSettings(now) {
+  const lists = {};
+  for (const k of Object.keys(DEFAULT_LISTS)) lists[k] = [...DEFAULT_LISTS[k]];
+  return { joinedAt: "", lists, replacements: [], updatedAt: now };
+}
+
+function normalizeSettings(raw, now, report) {
+  const ctx = { collection: "settings" };
+  const note = (level, code, field, message, before) => push(report, level, code, { ...ctx, field }, message, before);
+  if (raw === undefined) {
+    note("error", "settingsMissing", null, "設定がありません（入社年月・選択肢・置換リストが読めません）", raw);
+    return defaultSettings(now);
+  }
+  if (!isPlainObject(raw)) {
+    note("error", "settingsInvalid", null, "設定が壊れていて読めません（入社年月・選択肢・置換リストが読めません）", raw);
+    return defaultSettings(now);
+  }
+
+  let joinedAt = raw.joinedAt;
+  if (joinedAt === "" || isYearMonth(joinedAt)) {
+    /* そのまま */
+  } else if (joinedAt === undefined || joinedAt === null) {
+    note("fix", "missingField", "joinedAt", "入社年月が無かったので、空にしました", joinedAt);
+    joinedAt = "";
+  } else {
+    const r = repairYearMonth(joinedAt);
+    if (r !== null) {
+      note("fix", "dateRepaired", "joinedAt", `入社年月「${safeText(joinedAt)}」を「${r}」に直しました`, joinedAt);
+      joinedAt = r;
+    } else {
+      note("drop", "joinedAtInvalid", "joinedAt", `入社年月「${preview(joinedAt)}」が読めなかったので、空にしました`, joinedAt);
+      joinedAt = "";
+    }
+  }
+
+  const lists = {};
+  const rawLists = raw.lists;
+  if (rawLists === undefined || !isPlainObject(rawLists)) {
+    note("error", rawLists === undefined ? "listsMissing" : "listsInvalid", "lists", "設定の選択肢が読めません（初期値で表示します）", rawLists);
+    for (const name of Object.keys(DEFAULT_LISTS)) lists[name] = [...DEFAULT_LISTS[name]];
+  } else {
+    for (const name of Object.keys(DEFAULT_LISTS)) {
+      const ll = LIST_LABELS[name];
+      const v = rawLists[name];
+      let arr;
+      if (!Array.isArray(v)) {
+        note("error", v === undefined ? "listMissing" : "listInvalid", "lists", `設定の${ll}が読めません（初期値で表示します）`, v);
+        arr = [...DEFAULT_LISTS[name]];
+      } else {
+        arr = normalizeValue({ kind: "labels" }, v, "設定", ll, (level, code, message, before) => note(level, code, "lists", message, before), plainResolveRef).value;
+      }
+      for (const locked of LOCKED_LABELS[name]) {
+        if (!arr.includes(locked)) {
+          note("fix", "lockedLabelRestored", "lists", `設定の${ll}に「${locked}」が無かったので戻しました（V1では消せない選択肢）`, undefined);
+          arr.push(locked);
+        }
+      }
+      lists[name] = arr;
+    }
+    for (const k of Object.keys(rawLists)) {
+      if (!hasOwn(DEFAULT_LISTS, k)) note("drop", "unknownField", "lists", `設定の選択肢の不明な一覧「${k}」を捨てました`, rawLists[k]);
+    }
+  }
+
+  const replacements = [];
+  const rr = raw.replacements;
+  if (!Array.isArray(rr)) {
+    note("error", rr === undefined ? "replacementsMissing" : "replacementsInvalid", "replacements", "設定の置換リストが読めません（AIへ送る前の伏せ字が効かなくなるため、保存を止めます）", rr);
+  } else {
+    let changed = false;
+    let lost = false;
+    for (const item of rr) {
+      if (item === null || item === undefined) {
+        changed = true;
+        continue;
+      }
+      if (!isPlainObject(item) || typeof item.from !== "string" || item.from === "") {
+        lost = true;
+        continue;
+      }
+      let to = item.to;
+      if (to === undefined || to === null) {
+        to = "";
+        changed = true;
+      } else if (typeof to !== "string") {
+        to = "";
+        lost = true;
+      }
+      if (Object.keys(item).some((k) => k !== "from" && k !== "to")) lost = true;
+      replacements.push({ from: item.from, to });
+    }
+    if (lost) note("drop", "replacementsDropped", "replacements", "設定の置換リストから、読めないものを捨てました", rr);
+    else if (changed) note("fix", "replacementsCleaned", "replacements", "設定の置換リストの空の行を取り除きました", rr);
+  }
+
+  let updatedAt = null;
+  if (raw.updatedAt !== undefined && raw.updatedAt !== null) {
+    updatedAt = canonicalTimestamp(raw.updatedAt);
+    if (!updatedAt) note("drop", "timestampInvalid", "updatedAt", "設定の更新日時が読めなかったので、捨てました", raw.updatedAt);
+    else if (updatedAt !== raw.updatedAt) note("fix", "timestampFixed", "updatedAt", "設定の更新日時を読める形に直しました", raw.updatedAt);
+  }
+  if (!updatedAt) {
+    note("fix", "timestampFilled", "updatedAt", "設定の更新日時が無かったので、今の日時にしました", undefined);
+    updatedAt = now;
+  }
+
+  for (const k of Object.keys(raw)) {
+    if (!SETTINGS_KEYS.includes(k)) note("drop", "unknownField", k, `設定の不明な項目「${k}」を捨てました`, raw[k]);
+  }
+  return { joinedAt, lists, replacements, updatedAt };
+}
+
+/* ---------- 形をそろえる ---------- */
+
+/** 空のデータ（設定は既定値） */
+function emptyData(now) {
+  const data = { settings: defaultSettings(now) };
+  for (const c of COLLECTIONS) data[c] = [];
+  return data;
+}
+
+function checkOpts(now, newId) {
+  if (canonicalTimestamp(now) !== now) throw new Error(`now が toISOString() の形ではありません: ${safeText(now)}`);
+  if (typeof newId !== "function") throw new Error("newId が関数ではありません");
+}
+
+/**
+ * 同じ ID の2つの版のうち、残す方を決める比較（負なら a を残す）。
+ * 正規化での重複と、端末間のマージ（Phase 3）で同じ規則を使う。並び順に左右されないよう、最後は中身で決める。
+ * - 経験と能力の紐付け: 確定は候補に勝つ（人が確定したものを、自動で作った候補で上書きしない）。
+ *   候補どうしなら削除済みが勝つ（一度外した候補を、他の端末が後から作った候補で戻さない）。
+ *   確定どうしなら更新日時の新しい方
+ * - それ以外: 更新日時の新しい方
+ * @param {string} collection
+ * @param {object} a  正規化済みの行
+ * @param {object} b
+ */
+function preferVersion(collection, a, b) {
+  if (collection === "expCapLinks") {
+    if (a.state !== b.state) return a.state === "confirmed" ? -1 : 1;
+    if (a.state === "candidate") {
+      const da = a.deletedAt === null ? 1 : 0;
+      const db = b.deletedAt === null ? 1 : 0;
+      if (da !== db) return da - db;
+    }
+  }
+  if (a.updatedAt !== b.updatedAt) return a.updatedAt > b.updatedAt ? -1 : 1;
+  const ja = safeText(a);
+  const jb = safeText(b);
+  return ja < jb ? -1 : ja > jb ? 1 : 0;
+}
+
+/**
+ * データ全体の形をそろえる（参照の整合は applyIntegrity）。入力は書き換えない。
+ * - ID が読めないデータには新しい ID を付け、その ID を指していた参照も付け替える
+ * - ID の重複は error（更新日時の新しい方を残す）
+ * - 紐付け・能力どうしの関連の ID は、つなぐ2つの ID から決める。同じ組が重なったら1件にまとめる
+ * @param {unknown} raw  保存JSONの data 部分
+ * @param {{now:string, newId:(prefix:string)=>string}} opts
+ */
+function normalizeShape(raw, { now, newId }) {
+  checkOpts(now, newId);
+  const report = createReport();
+  if (!isPlainObject(raw)) {
+    push(report, "error", "noData", {}, "データ本体がありません", raw);
+    return { data: emptyData(now), report };
+  }
+  const data = { settings: normalizeSettings(raw.settings, now, report) };
+
+  const lists = {};
+  for (const c of COLLECTIONS) {
+    const label = COLLECTION_LABELS[c];
+    const v = raw[c];
+    if (v === undefined) {
+      push(report, "error", "collectionMissing", { collection: c }, `${label}の一覧がありません`);
+      lists[c] = [];
+    } else if (!Array.isArray(v)) {
+      push(report, "error", "collectionNotArray", { collection: c }, `${label}の一覧が壊れていて読めません`, v);
+      lists[c] = [];
+    } else {
+      lists[c] = v;
+    }
+  }
+  for (const k of Object.keys(raw)) {
+    if (k !== "settings" && !COLLECTIONS.includes(k)) {
+      push(report, "drop", "unknownCollection", { field: k }, `不明なデータ「${k}」を捨てました`, raw[k]);
+    }
+  }
+
+  // 1) ID を決める（組から決まるコレクション以外）。読めない ID は付け直し、付け替えの対応を remap に残す
+  const remap = {};
+  const plan = {};
+  for (const c of COLLECTIONS) {
+    remap[c] = new Map();
+    const label = COLLECTION_LABELS[c];
+    const entries = [];
+    lists[c].forEach((item, index) => {
+      if (!isPlainObject(item)) {
+        push(report, "drop", "notObject", { collection: c, index }, `${label}の${index + 1}件目が壊れていたので捨てました`, item);
+        return;
+      }
+      entries.push({ item, index });
+    });
+    if (DERIVED_ID_COLLECTIONS.includes(c)) {
+      plan[c] = entries;
+      continue;
+    }
+    const groups = new Map();
+    for (const e of entries) {
+      if (isIdLike(e.item.id)) e.key = "id:" + e.item.id;
+      else {
+        const k = rawIdKey(e.item.id);
+        e.key = k === null ? null : "raw:" + k;
+        e.rawKey = k;
+      }
+      if (e.key !== null) {
+        if (!groups.has(e.key)) groups.set(e.key, []);
+        groups.get(e.key).push(e);
+      }
+    }
+    const excluded = new Set();
+    for (const group of groups.values()) {
+      if (group.length < 2) continue;
+      // 元の値で比べる（更新日時の新しい方、同じなら中身で決める）
+      const ranked = [...group].sort((x, y) =>
+        preferVersion(c, { updatedAt: canonicalTimestamp(x.item.updatedAt) || "", raw: x.item }, { updatedAt: canonicalTimestamp(y.item.updatedAt) || "", raw: y.item }),
+      );
+      for (const e of ranked.slice(1)) {
+        excluded.add(e);
+        push(report, "error", "duplicateId", { collection: c, id: isIdLike(e.item.id) ? e.item.id : null, index: e.index },
+          `${label}でID「${safeText(e.item.id)}」が重複しています。更新日時の新しい方を残し、${e.index + 1}件目を読み込みから外しました`, e.item);
+      }
+    }
+    const kept = entries.filter((e) => !excluded.has(e));
+    for (const e of kept) {
+      if (isIdLike(e.item.id)) {
+        e.id = e.item.id;
+        continue;
+      }
+      e.id = newId(ID_PREFIX[c]);
+      const ctx = { collection: c, index: e.index, id: e.id, field: "id", name: shortName(e.item.title) || shortName(e.item.name) };
+      if (e.rawKey !== null && e.rawKey !== undefined) {
+        remap[c].set(e.rawKey, e.id);
+        push(report, "fix", "idRemapped", ctx, `${describe(ctx)}のID「${e.rawKey}」が読めない形だったので、新しいID（${e.id}）を付けました。このIDを指していた参照も付け替えます`, e.item.id);
+      } else {
+        push(report, "fix", "idAssigned", ctx, `${describe(ctx)}にIDが無かったので、新しいID（${e.id}）を付けました`, e.item.id);
+      }
+    }
+    plan[c] = kept;
+  }
+
+  const resolveRef = (to, v) => {
+    if (isIdLike(v)) return { id: v, how: "ok" };
+    const k = rawIdKey(v);
+    if (k !== null && remap[to] && remap[to].has(k)) return { id: remap[to].get(k), how: "remapped" };
+    return { id: null, how: "invalid" };
+  };
+
+  // 2) 1件ずつ形をそろえる
+  for (const c of COLLECTIONS) {
+    const label = COLLECTION_LABELS[c];
+    if (!DERIVED_ID_COLLECTIONS.includes(c)) {
+      const out = [];
+      for (const e of plan[c]) {
+        const row = normalizeRow(c, e.item, { id: e.id, now, report, resolveRef, index: e.index });
+        if (row) out.push(row);
+      }
+      data[c] = out;
+      continue;
+    }
+    // 組から ID が決まるコレクション
+    const [k1, k2] = c === "expCapLinks" ? ["experienceId", "capabilityId"] : ["aId", "bId"];
+    const rows = [];
+    for (const e of plan[c]) {
+      const tempId = isIdLike(e.item.id) ? e.item.id : null;
+      const row = normalizeRow(c, e.item, { id: tempId, now, report, resolveRef, index: e.index });
+      if (!row) continue;
+      const ctx = { collection: c, index: e.index, id: tempId };
+      if (row[k1] === null || row[k2] === null) {
+        push(report, "drop", "requiredRefInvalid", ctx, `${describe(ctx)}のつなぐ先が読めないので、このデータを捨てました`, e.item);
+        continue;
+      }
+      if (c === "capRelations") {
+        if (row.aId === row.bId) {
+          push(report, "drop", "selfRelation", ctx, `${describe(ctx)}が同じ能力どうしを関連づけていたので、捨てました`, e.item);
+          continue;
+        }
+        const [x, y] = orderedPair(row.aId, row.bId);
+        if (x !== row.aId) {
+          push(report, "fix", "pairOrdered", ctx, `${describe(ctx)}の2つの能力を、決まった順に並べ替えました`, [row.aId, row.bId]);
+          row.aId = x;
+          row.bId = y;
+        }
+      }
+      const did = c === "expCapLinks" ? linkId(row.experienceId, row.capabilityId) : capRelationId(row.aId, row.bId);
+      if (!isIdLike(did)) {
+        push(report, "drop", "idTooLong", ctx, `${describe(ctx)}のIDが長すぎて作れないので、このデータを捨てました`, e.item);
+        continue;
+      }
+      if (did !== e.item.id) {
+        push(report, "fix", "idDerived", { ...ctx, id: did, field: "id" }, `${label}のIDを、つなぐ2つのIDから決めました（${did}）`, e.item.id);
+      }
+      row.id = did;
+      rows.push({ row, index: e.index });
+    }
+    const byId = new Map();
+    for (const r of rows) {
+      if (!byId.has(r.row.id)) byId.set(r.row.id, []);
+      byId.get(r.row.id).push(r);
+    }
+    const out = [];
+    for (const r of rows) {
+      const group = byId.get(r.row.id);
+      if (group.length > 1) {
+        const best = [...group].sort((x, y) => preferVersion(c, x.row, y.row))[0];
+        if (r !== best) {
+          const ctx = { collection: c, id: r.row.id, index: r.index };
+          push(report, "drop", "duplicateRow", ctx, `${describe(ctx)}は同じ組のデータが重なっていたので、1件だけを残しました（確定を優先し、次に更新日時の新しい方）`, r.row);
+          continue;
+        }
+      }
+      out.push(r.row);
+    }
+    data[c] = out;
+  }
+  return { data, report };
+}
+
+/* ---------- 参照の整合 ---------- */
+
+/**
+ * 参照をそろえる（入力は書き換えない）。
+ * - 参照先がそもそも無い参照を外す。必須の参照先が無いデータは捨てる
+ * - 削除済みのデータへの参照はそのまま残す（削除を取り消せば元に戻る。表示・集計では除いて扱う）
+ * - 削除済みのデータ自体は、参照を見ない（削除の記録として残す）
+ * - 大まかな経験（親子）は1階層まで。循環しているものだけ親を外し、孫は一番上の親に付け替える
+ * @param {object} data  normalizeShape 済みのデータ
+ * @param {{report?: {items:object[]}}} [opts]
+ */
+function applyIntegrity(data, { report = createReport() } = {}) {
+  const out = structuredClone(data);
+  applyIntegrityInPlace(out, report);
+  return { data: out, report };
+}
+
+function applyIntegrityInPlace(data, report) {
+  const ids = {};
+  for (const c of COLLECTIONS) ids[c] = new Set(data[c].map((e) => e.id));
+  const ctxOf = (c, e, field) => ({ collection: c, id: e.id, field, name: shortName(e.title) || shortName(e.name) });
+
+  // 1) 参照先が無いものを外す（生きているデータだけ）
+  for (const c of COLLECTIONS) {
+    const spec = SCHEMA[c];
+    const kept = [];
+    for (const e of data[c]) {
+      if (e.deletedAt !== null) {
+        kept.push(e);
+        continue;
+      }
+      let dropped = false;
+      for (const [key, fs] of Object.entries(spec)) {
+        const ctx = ctxOf(c, e, key);
+        const d = describe(ctx);
+        const f = fieldLabel(key);
+        if (fs.kind === "ref") {
+          const v = e[key];
+          if (fs.required) {
+            if (v === null || !ids[fs.to].has(v)) {
+              push(report, "drop", "danglingRequired", ctx, `${d}の${f}の参照先が見つからないので、このデータを捨てました`, e);
+              dropped = true;
+              break;
+            }
+          } else if (v !== null && !ids[fs.to].has(v)) {
+            push(report, "drop", "danglingRef", ctx, `${d}の${f}の参照先が見つからないので、外しました`, v);
+            e[key] = null;
+          } else if (v !== null && c === fs.to && v === e.id) {
+            push(report, "fix", "selfRef", ctx, `${d}の${f}が自分自身を指していたので、外しました`, v);
+            e[key] = null;
+          }
+        } else if (fs.kind === "refs") {
+          const filtered = e[key].filter((id) => ids[fs.to].has(id));
+          if (filtered.length !== e[key].length) {
+            push(report, "drop", "danglingRefs", ctx, `${d}の${f}から、参照先が見つからないものを外しました`, e[key]);
+            e[key] = filtered;
+          }
+        } else if (fs.kind === "targets") {
+          const filtered = e[key].filter((t) => ids[fs.to].has(t.capabilityId));
+          if (filtered.length !== e[key].length) {
+            push(report, "drop", "danglingRefs", ctx, `${d}の${f}から、参照先が見つからない能力を外しました`, e[key]);
+            e[key] = filtered;
+          }
+        }
+      }
+      if (!dropped && c === "expRelations" && e.fromId === e.toId) {
+        const ctx = ctxOf(c, e, "toId");
+        push(report, "drop", "selfRelation", ctx, `${describe(ctx)}が同じ経験どうしを関連づけていたので、捨てました`, e);
+        dropped = true;
+      }
+      if (!dropped) kept.push(e);
+    }
+    data[c] = kept;
+  }
+
+  // 2) 大まかな経験（親子）は1階層まで。生きている経験どうしの親子だけを見る
+  //    （親が削除済みなら、その子は表示上は親の無い経験。削除済みの祖先まではたどらない）
+  const exps = new Map(data.experiences.map((e) => [e.id, e]));
+  const liveParent = (id) => {
+    const e = exps.get(id);
+    if (!e || e.deletedAt !== null || e.parentId === null) return null;
+    const p = exps.get(e.parentId);
+    return p && p.deletedAt === null ? p.id : null;
+  };
+  const snapshot = new Map(data.experiences.map((e) => [e.id, liveParent(e.id)]));
+  const inCycle = (id) => {
+    const seen = new Set();
+    let cur = snapshot.get(id);
+    while (cur !== null && cur !== undefined && !seen.has(cur)) {
+      if (cur === id) return true;
+      seen.add(cur);
+      cur = snapshot.get(cur);
+    }
+    return false;
+  };
+  const cycleMembers = data.experiences.filter((e) => e.deletedAt === null && snapshot.get(e.id) !== null && inCycle(e.id));
+  for (const e of cycleMembers) {
+    const ctx = ctxOf("experiences", e, "parentId");
+    push(report, "drop", "parentCycle", ctx, `${describe(ctx)}の大まかな経験が循環していたので、外しました`, e.parentId);
+    e.parentId = null;
+  }
+  for (const e of data.experiences) {
+    const p = liveParent(e.id);
+    if (p === null) continue;
+    const seen = new Set([e.id, p]);
+    let root = p;
+    for (;;) {
+      const up = liveParent(root);
+      if (up === null || seen.has(up)) break;
+      seen.add(up);
+      root = up;
+    }
+    if (root !== e.parentId) {
+      const ctx = ctxOf("experiences", e, "parentId");
+      const rn = shortName(exps.get(root).title) || root;
+      push(report, "drop", "parentFlattened", ctx, `${describe(ctx)}の大まかな経験を、さらに上の「${rn}」に付け替えました（親子は1階層まで）`, e.parentId);
+      e.parentId = root;
+    }
+  }
+}
+
+/* ---------- データ全体 ---------- */
+
+/**
+ * データ全体（保存JSONの data 部分）を正規化する（形 → 整合）。入力は書き換えない。
+ * @param {unknown} raw
+ * @param {{now:string, newId:(prefix:string)=>string}} opts
+ *   now: 欠けた日時を補うときの「今」（toISOString() の形）
+ *   newId: ID が無い・読めないデータに新しい ID を付けるときに使う
+ * @returns {{data: object, report: {items: object[]}}}
+ */
+function normalizeData(raw, { now, newId }) {
+  const { data, report } = normalizeShape(raw, { now, newId });
+  applyIntegrityInPlace(data, report);
+  return { data, report };
+}
+__export(__exports, { "createReport": () => createReport, "hasErrors": () => hasErrors, "needsBackup": () => needsBackup, "countByLevel": () => countByLevel, "safeText": () => safeText, "plainResolveRef": () => plainResolveRef, "normalizeRow": () => normalizeRow, "defaultSettings": () => defaultSettings, "emptyData": () => emptyData, "preferVersion": () => preferVersion, "normalizeShape": () => normalizeShape, "applyIntegrity": () => applyIntegrity, "normalizeData": () => normalizeData });
+});
+__define("core/schema.js", function (__exports, __require) {
+"use strict";
+/*
+ * データの形（スキーマ）の定義（DOM非依存）
+ *
+ * コレクションごとに、項目名と値の種類を並べる。この並び順が保存JSONの項目の並び順になる。
+ * どのデータにも先頭に id、末尾に createdAt / updatedAt / deletedAt が付く（ここには書かない）。
+ *   deletedAt: 削除の記録。null なら生きているデータ。削除しても行は残し、端末間の同期で削除を伝える。
+ *
+ * 参照の決まり:
+ *   削除済みのデータへの参照は外さずに残す（削除を取り消せば元に戻る）。表示と集計では、
+ *   参照先が削除済みのものを除いて扱う。参照先がそもそも無い（ID が見つからない）参照だけを、正規化で外す。
+ *
+ * 値の種類:
+ *   str     文字列
+ *   bool    真偽値
+ *   pdate   精度つき日付（"2024" / "2024-06" / "2024-06-15" / ""）
+ *   labels  ラベルの一覧（前後の空白を除き、空と重複を除く）
+ *   ref     別のデータへの参照（ID か null）。required なら参照先が必須
+ *   refs    別のデータへの参照の一覧
+ *   enum    決まった値のどれか（constants.js の ENUMS）
+ *   level   能力レベル 0〜5（必須）
+ *   group   文字列の項目をまとめたもの（経験の内容・意味づけ）
+ *   targets Gap の対象の能力 [{ capabilityId, targetLevel }]
+ */
+
+const { CONTENT_FIELDS, ENUM_DEFAULTS, MEANING_FIELDS } = __require("core/constants.js");
+
+const T = Object.freeze({
+  str: () => ({ kind: "str" }),
+  bool: () => ({ kind: "bool" }),
+  pdate: () => ({ kind: "pdate" }),
+  labels: () => ({ kind: "labels" }),
+  ref: (to, required = false) => ({ kind: "ref", to, required }),
+  refs: (to) => ({ kind: "refs", to }),
+  enumOf: (name) => ({ kind: "enum", name }),
+  level: () => ({ kind: "level" }),
+  group: (fields) => ({ kind: "group", keys: fields.map((f) => f[0]) }),
+  targets: () => ({ kind: "targets", to: "capabilities" }),
+});
+
+const SCHEMA = Object.freeze({
+  projects: Object.freeze({
+    name: T.str(),
+    publicName: T.str(),
+    start: T.pdate(),
+    end: T.pdate(),
+    note: T.str(),
+  }),
+  experiences: Object.freeze({
+    parentId: T.ref("experiences"),
+    projectId: T.ref("projects"),
+    title: T.str(),
+    start: T.pdate(),
+    end: T.pdate(),
+    ongoing: T.bool(),
+    categories: T.labels(),
+    phases: T.labels(),
+    role: T.str(),
+    roleNote: T.str(),
+    techs: T.labels(),
+    tags: T.labels(),
+    inbox: T.bool(),
+    memo: T.str(),
+    content: T.group(CONTENT_FIELDS),
+    meaning: T.group(MEANING_FIELDS),
+  }),
+  capabilities: Object.freeze({
+    name: T.str(),
+    category: T.str(),
+    description: T.str(),
+    aliases: T.labels(),
+    archived: T.bool(),
+  }),
+  // 能力どうしの関連（「関連する能力」）。aId < bId に並べて持ち、ID は組から決まる
+  capRelations: Object.freeze({
+    aId: T.ref("capabilities", true),
+    bId: T.ref("capabilities", true),
+    note: T.str(),
+  }),
+  expCapLinks: Object.freeze({
+    experienceId: T.ref("experiences", true),
+    capabilityId: T.ref("capabilities", true),
+    note: T.str(),
+    state: T.enumOf("linkState"),
+    source: T.enumOf("linkSource"),
+  }),
+  assessments: Object.freeze({
+    capabilityId: T.ref("capabilities", true),
+    date: T.pdate(),
+    level: T.level(),
+    reason: T.str(),
+    experienceIds: T.refs("experiences"),
+  }),
+  evidences: Object.freeze({
+    experienceId: T.ref("experiences", true),
+    type: T.str(),
+    title: T.str(),
+    url: T.str(),
+    text: T.str(),
+    date: T.pdate(),
+    status: T.enumOf("evidenceStatus"),
+    disclosure: T.enumOf("disclosure"),
+  }),
+  expRelations: Object.freeze({
+    fromId: T.ref("experiences", true),
+    toId: T.ref("experiences", true),
+    note: T.str(),
+  }),
+  gaps: Object.freeze({
+    title: T.str(),
+    desiredState: T.str(),
+    detail: T.str(),
+    targets: T.targets(),
+    status: T.enumOf("gapStatus"),
+  }),
+  nextExperiences: Object.freeze({
+    title: T.str(),
+    why: T.str(),
+    gapIds: T.refs("gaps"),
+    capabilityIds: T.refs("capabilities"),
+    plannedEvidence: T.labels(),
+    when: T.pdate(),
+    status: T.enumOf("nextStatus"),
+    resultExperienceId: T.ref("experiences"),
+  }),
+});
+
+/** 各種類の既定値（配列・オブジェクトは毎回新しく作る） */
+function defaultValue(spec) {
+  switch (spec.kind) {
+    case "str":
+    case "pdate":
+      return "";
+    case "bool":
+      return false;
+    case "labels":
+    case "refs":
+    case "targets":
+      return [];
+    case "ref":
+      return null;
+    case "enum":
+      return ENUM_DEFAULTS[spec.name];
+    case "level":
+      return 0;
+    case "group": {
+      const o = {};
+      for (const k of spec.keys) o[k] = "";
+      return o;
+    }
+    default:
+      throw new Error(`未知の値の種類です: ${spec.kind}`);
+  }
+}
+
+/** コレクションの項目名（id・日時を含む、保存JSONの並び順） */
+function entityKeys(collection) {
+  const spec = SCHEMA[collection];
+  if (!spec) throw new Error(`未知のコレクションです: ${collection}`);
+  return ["id", ...Object.keys(spec), "createdAt", "updatedAt", "deletedAt"];
+}
+__export(__exports, { "T": () => T, "SCHEMA": () => SCHEMA, "defaultValue": () => defaultValue, "entityKeys": () => entityKeys });
+});
+__define("core/storage-format.js", function (__exports, __require) {
+"use strict";
+/*
+ * 保存形式（DOM非依存・純粋関数）
+ *
+ * 保存JSON（localStorage にも、JSON Export のファイルにも同じ形で書く）:
+ *   { "app": "career-graph", "schemaVersion": 1, "savedAt": "...", "data": { settings, projects, ... } }
+ *
+ * 読み込みの流れ: JSONを読む → app と版を確かめる → 移行 → 正規化（報告つき）
+ *
+ * 呼び出し側の約束（loadFromText / loadFromObject の結果）:
+ *   ok:false  元のデータを上書きしない（自動保存を止める）。data・report があれば、確認用に表示してよい
+ *   needsBackup:true  保存の前に、元のデータ（読み込んだ文字列）を退避用の保存キーに残す
+ *
+ * 保存キー（localStorage）は専用の接頭辞で始める。普段使いの版（main）と開発中の版（dev）で分ける。
+ */
+
+const { APP_ID, SCHEMA_VERSION } = __require("core/constants.js");
+const { canonicalTimestamp } = __require("core/dates.js");
+const { MIGRATIONS, migrateData } = __require("core/migrate.js");
+const { hasErrors, needsBackup, normalizeData, safeText } = __require("core/normalize.js");
+
+/** 保存JSONを作る（data は正規化済みのもの） */
+function serialize(data, { now }) {
+  if (canonicalTimestamp(now) !== now) throw new Error(`now が toISOString() の形ではありません: ${safeText(now)}`);
+  return { app: APP_ID, schemaVersion: SCHEMA_VERSION, savedAt: now, data };
+}
+
+/** 保存JSONを文字列にする。pretty なら人が読める形（JSON Export 用） */
+function toJson(envelope, { pretty = false } = {}) {
+  return pretty ? JSON.stringify(envelope, null, 2) + "\n" : JSON.stringify(envelope);
+}
+
+function fail(code, message) {
+  return { ok: false, needsBackup: true, error: { code, message } };
+}
+
+/**
+ * 保存JSON（オブジェクト）を読み込む。
+ * @param {unknown} obj
+ * @param {{now:string, newId:(prefix:string)=>string, migrations?:object, currentVersion?:number}} opts
+ * @returns {{ok:boolean, needsBackup:boolean, error?:{code:string, message:string}, data?:object,
+ *            report?:{items:object[]}, fromVersion?:number, migratedSteps?:number[]}}
+ */
+function loadFromObject(obj, { now, newId, migrations = MIGRATIONS, currentVersion = SCHEMA_VERSION }) {
+  if (obj === null || typeof obj !== "object" || Array.isArray(obj)) return fail("notObject", "保存データの形が違います");
+  if (obj.app !== APP_ID) {
+    return fail("notThisApp", `このアプリのデータではありません（app: ${safeText(obj.app)}）`);
+  }
+  const v = obj.schemaVersion;
+  if (v === undefined) return fail("noVersion", "データバージョンがありません");
+  if (!Number.isInteger(v) || v < 1) return fail("badVersion", `データバージョン「${safeText(v)}」が読めません`);
+  if (obj.data === undefined) return fail("noData", "データ本体がありません");
+
+  const m = migrateData(obj.data, v, { migrations, toVersion: currentVersion });
+  if (!m.ok) return { ok: false, needsBackup: true, error: m.error };
+  const { data, report } = normalizeData(m.data, { now, newId });
+  if (m.steps.length > 0) {
+    report.items.unshift({
+      level: "info",
+      code: "migrated",
+      collection: null,
+      id: null,
+      field: null,
+      message: `データバージョン${v}から${currentVersion}へ移行しました`,
+    });
+  }
+  const base = { data, report, fromVersion: v, migratedSteps: m.steps };
+  if (hasErrors(report)) {
+    return {
+      ok: false,
+      needsBackup: true,
+      error: { code: "unsafeData", message: "データに、安全に読み込めない問題があります（詳しくは報告を見てください）" },
+      ...base,
+    };
+  }
+  // 移行したときは、元の版のデータを退避してから保存する
+  return { ok: true, needsBackup: needsBackup(report) || m.steps.length > 0, ...base };
+}
+
+/**
+ * 保存JSON（文字列）を読み込む。JSONとして読めなければ ok:false。
+ * @param {string} text
+ */
+function loadFromText(text, opts) {
+  if (typeof text !== "string") return fail("notText", "保存データが文字列ではありません");
+  let obj;
+  try {
+    obj = JSON.parse(text);
+  } catch {
+    // ブラウザの例外の文（英語）は画面に出さない。中身はダウンロードして確かめられる
+    return fail("parse", "保存データを JSON として読めませんでした（途中で切れているか、壊れています）");
+  }
+  return loadFromObject(obj, opts);
+}
+
+/* ---------- 保存キーと退避 ---------- */
+
+const STORAGE_CHANNELS = Object.freeze(["main", "dev"]);
+
+/**
+ * localStorage のキー。
+ *   data        保存JSON
+ *   quarantine  退避データの一覧（壊れたデータ・移行前の元データ・保存できなかった入力）
+ *   prefs       表示設定・最終Export日時など（本体と分け、Undo・Import の対象外）
+ *   draft       クイック入力の書きかけ（「記録する」を押す前の入力。アプリを閉じても消えないように）
+ */
+function storageKeys(channel = "main") {
+  if (!STORAGE_CHANNELS.includes(channel)) throw new Error(`未知の保存先です: ${safeText(channel)}`);
+  const p = `${APP_ID}:${channel}:`;
+  return Object.freeze({ data: p + "data", quarantine: p + "quarantine", prefs: p + "prefs", draft: p + "draft" });
+}
+
+/**
+ * 退避データの1件。raw は元のデータ（文字列。オブジェクトなら JSON にする）
+ * @param {{at:string, reason:string, message?:string, raw:unknown}} e
+ */
+function makeQuarantineEntry({ at, reason, message, raw }) {
+  if (canonicalTimestamp(at) !== at) throw new Error(`at が toISOString() の形ではありません: ${safeText(at)}`);
+  let text = raw;
+  if (typeof text !== "string") {
+    try {
+      text = JSON.stringify(raw);
+    } catch {
+      text = undefined;
+    }
+  }
+  if (typeof text !== "string") throw new Error("退避するデータを文字にできません");
+  return { at, reason: safeText(reason), message: message === undefined ? "" : safeText(message), raw: text };
+}
+
+/** 並べ替え用: 新しい順（日時が読めないものは最後） */
+function byAtDesc(a, b) {
+  if (a.at === b.at) return 0;
+  if (a.at === "") return 1;
+  if (b.at === "") return -1;
+  return a.at < b.at ? 1 : -1;
+}
+
+/**
+ * 退避データの一覧を読む。新しい順に並べる。
+ * 中身（raw）が文字なら、日時が読めなくても捨てない（それが唯一の写しかもしれないため。日時は "" にして最後に並べる）。
+ */
+function parseQuarantineList(text) {
+  if (typeof text !== "string" || text === "") return [];
+  let arr;
+  try {
+    arr = JSON.parse(text);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(arr)) return [];
+  const out = [];
+  for (const e of arr) {
+    if (!e || typeof e !== "object" || typeof e.raw !== "string") continue;
+    out.push({ at: canonicalTimestamp(e.at) || "", reason: safeText(e.reason ?? ""), message: safeText(e.message ?? ""), raw: e.raw });
+  }
+  return out.sort(byAtDesc);
+}
+
+/**
+ * 退避データを1件足す。新しい順に並べ、全体で max 件まで残す。
+ * - 今足した1件は必ず残す（端末の時計が戻って、日時が古く見えても）
+ * - 理由（reason）ごとの一番新しいものは、max を超えても残す（移行前の元データが押し出されないように）
+ * - 中身（raw）が同じものは重ねない
+ * - maxChars を渡すと、中身の文字数の合計がそれ以下になるまで捨てる。
+ *   まず理由ごとの一番新しいもの以外を古い順に、それでも超えるときだけ理由ごとの一番新しいものを古い順に捨てる。
+ *   保存領域の容量は環境で違うので、上限は保存する側が決める
+ * - isProtected が true を返すもの（元のデータの退避など、唯一の写しになりうるもの）は、件数でも文字数でも捨てない。
+ *   そのため結果が maxChars を超えることがある（保存できなければ、呼び出し側が退避の失敗として扱う）
+ * @param {{at:string, reason:string, message:string, raw:string}[]} list
+ * @param {{at:string, reason:string, message:string, raw:string}} entry
+ * @param {{max?:number, maxChars?:number, isProtected?:(e:object)=>boolean}} [opts]
+ */
+function pushQuarantine(list, entry, { max = 5, maxChars = Infinity, isProtected = () => false } = {}) {
+  if (!Number.isInteger(max) || max < 1) throw new Error(`max は1以上の整数にしてください: ${max}`);
+  const all = [entry, ...list.filter((e) => e.raw !== entry.raw)].sort(byAtDesc);
+  let out = [];
+  const reasons = new Set();
+  for (const e of all) {
+    const firstOfReason = !reasons.has(e.reason);
+    if (e === entry || out.length < max || firstOfReason || isProtected(e)) out.push(e);
+    reasons.add(e.reason);
+  }
+  const size = (l) => l.reduce((n, e) => n + e.raw.length, 0);
+  // 容量を超えたら、今足した1件と守るものは残し、まず「その理由の一番新しいもの」以外を古い順に捨てる。
+  // それでも超えるときだけ、理由ごとの一番新しいものを古い順に捨てる
+  const newestOfReason = (l, e) => l.find((x) => x.reason === e.reason) === e;
+  while (out.length > 1 && size(out) > maxChars) {
+    const older = [...out].reverse().filter((e) => e !== entry && !isProtected(e));
+    if (older.length === 0) break;
+    const victim = older.find((e) => !newestOfReason(out, e)) || older[0];
+    out = out.filter((e) => e !== victim);
+  }
+  return out;
+}
+__export(__exports, { "serialize": () => serialize, "toJson": () => toJson, "loadFromObject": () => loadFromObject, "loadFromText": () => loadFromText, "STORAGE_CHANNELS": () => STORAGE_CHANNELS, "storageKeys": () => storageKeys, "makeQuarantineEntry": () => makeQuarantineEntry, "parseQuarantineList": () => parseQuarantineList, "pushQuarantine": () => pushQuarantine });
+});
+__define("persist/autosave.js", function (__exports, __require) {
+"use strict";
+/*
+ * まとめ待ちの自動保存（DOM非依存。タイマーは引数で受け取る）
+ *
+ * 変更のたびに schedule() を呼ぶ。最後の変更から delay ミリ秒たったら save() を1回呼ぶ。
+ * flush() はすぐに保存する（画面が隠れたとき・タブを閉じる前）。
+ * 保存に失敗したら「未保存」のまま残し、次の schedule() / flush() でもう一度試す。
+ */
+
+/**
+ * @param {{
+ *   save: () => {ok:boolean},
+ *   delay?: number,
+ *   setTimer?: (fn:Function, ms:number) => any,
+ *   clearTimer?: (t:any) => void,
+ *   onResult?: (result:{ok:boolean}) => void,
+ * }} deps
+ */
+function createAutosaver({ save, delay = 800, setTimer = setTimeout, clearTimer = clearTimeout, onResult = () => {} }) {
+  let timer = null;
+  let dirty = false;
+
+  function run() {
+    if (timer !== null) {
+      clearTimer(timer);
+      timer = null;
+    }
+    if (!dirty) return null;
+    let result;
+    try {
+      result = save();
+    } catch (e) {
+      result = { ok: false, code: "exception", message: String(e && e.message ? e.message : e) };
+    }
+    if (result && result.ok) dirty = false;
+    onResult(result);
+    return result;
+  }
+
+  return {
+    /** 変更があったことを知らせる（delay ミリ秒後に保存） */
+    schedule() {
+      dirty = true;
+      if (timer !== null) clearTimer(timer);
+      timer = setTimer(run, delay);
+    },
+    /** 未保存の変更があれば、すぐに保存する */
+    flush() {
+      return run();
+    },
+    /** 未保存の変更があるか */
+    isDirty() {
+      return dirty;
+    },
+    /** 未保存の変更が無い状態に戻す（保存できなかった変更を取り消して、保存済みの内容に戻したとき） */
+    markClean() {
+      if (timer !== null) {
+        clearTimer(timer);
+        timer = null;
+      }
+      dirty = false;
+    },
+  };
+}
+__export(__exports, { "createAutosaver": () => createAutosaver });
+});
+__define("persist/export.js", function (__exports, __require) {
+"use strict";
+/*
+ * JSON Export の中身とファイル名（DOM非依存・純粋関数）
+ *
+ * ファイルを端末に渡す部分（ダウンロード・共有）は画面側（ui/files.js）で行う。
+ * Export は最後の逃げ道なので、保存を止めているときでも、画面の内容をそのまま書き出せるようにする。
+ */
+
+const { serialize, toJson } = __require("core/storage-format.js");
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+/**
+ * Export のファイル名。ローカルの日時を入れる。例: career-graph-20261001-2140.json（開発版は career-graph-dev-…）
+ * @param {{y:number, m:number, d:number, hh:number, mm:number}} t
+ * @param {"main"|"dev"} channel
+ */
+function exportFileName(t, channel = "main") {
+  const prefix = channel === "dev" ? "career-graph-dev" : "career-graph";
+  return `${prefix}-${t.y}${pad2(t.m)}${pad2(t.d)}-${pad2(t.hh)}${pad2(t.mm)}.json`;
+}
+
+/** Export する文字列（保存JSONと同じ形。人が読めるように改行を入れる） */
+function exportText(data, { now }) {
+  return toJson(serialize(data, { now }), { pretty: true });
+}
+
+/**
+ * 退避データ・読み込めなかったデータを書き出すときのファイル名。中身が JSON として読めれば .json、読めなければ .txt
+ * @param {string} raw
+ * @param {string} label  ファイル名に入れる英字の目印（例: "quarantine-conflict"）
+ * @param {{y:number, m:number, d:number, hh:number, mm:number}} t
+ * @param {"main"|"dev"} channel
+ */
+function rawFileName(raw, label, t, channel = "main") {
+  let ext = "txt";
+  try {
+    JSON.parse(raw);
+    ext = "json";
+  } catch {
+    ext = "txt";
+  }
+  const safe = String(label).replace(/[^A-Za-z0-9-]/g, "-");
+  const prefix = channel === "dev" ? "career-graph-dev" : "career-graph";
+  return `${prefix}-${safe}-${t.y}${pad2(t.m)}${pad2(t.d)}-${pad2(t.hh)}${pad2(t.mm)}.${ext}`;
+}
+__export(__exports, { "exportFileName": () => exportFileName, "exportText": () => exportText, "rawFileName": () => rawFileName });
+});
+__define("persist/local.js", function (__exports, __require) {
+"use strict";
+/*
+ * localStorage への保存（DOM非依存）
+ *
+ * 保存先（storage）は引数で受け取る。ブラウザでは window.localStorage、テストでは偽物を渡す。
+ * 使うのは getItem / setItem だけ。
+ *
+ * 守ること（設計書 3章「変えるもの」・4.6・4.7・8.2）:
+ *   1. 読み込めないデータ・新しい版のデータは上書きしない。利用者が「直した内容で続ける」「空で始める」を選び、
+ *      元のデータを退避できるまで保存しない
+ *   2. 値を捨てて直した・移行したデータは、保存の前に元のデータを退避する
+ *   3. 保存の前に、保存先が「最後に読んだ・書いた中身」から変わっていないかを確かめる。
+ *      変わっていたら（別のタブや新しい版のアプリが保存した）上書きせず、こちらの内容を退避して保存を止める
+ *   4. 保存前チェック: 保存するデータを正規化し、直せない問題（ID の重複など）があれば保存せずに退避する
+ *   5. 書いたら読み直して、書けたことを確かめる
+ */
+
+const { SCHEMA_VERSION } = __require("core/constants.js");
+const { canonicalTimestamp } = __require("core/dates.js");
+const { emptyData, hasErrors, needsBackup, normalizeData, safeText } = __require("core/normalize.js");
+const { loadFromText, makeQuarantineEntry, parseQuarantineList, pushQuarantine, serialize, storageKeys, toJson } = __require("core/storage-format.js");
+
+/** 退避データの件数の目安（理由ごとの一番新しいものは、これを超えても残す） */
+const QUARANTINE_MAX = 5;
+
+/**
+ * 退避データの中身の文字数の上限。localStorage は1つのサイトにつき 5MiB 前後で、
+ * 本体の保存データと分け合うため、本体が入る余地を残す。
+ */
+const QUARANTINE_MAX_CHARS = 1_000_000;
+
+/** 退避の理由（保存上の値） */
+const REASONS = Object.freeze({
+  loadFailed: "loadFailed",
+  beforeRepair: "beforeRepair",
+  beforeMigrate: "beforeMigrate",
+  saveFailed: "saveFailed",
+  conflict: "conflict",
+  quarantineBroken: "quarantineBroken",
+});
+
+/** 退避の理由の表示名 */
+const REASON_LABELS = Object.freeze({
+  loadFailed: "読み込めなかった元のデータ",
+  beforeRepair: "直す前の元のデータ",
+  beforeMigrate: "移行する前の元のデータ",
+  saveFailed: "保存できなかった入力",
+  conflict: "別の画面と食い違ったため保存しなかった入力",
+  quarantineBroken: "壊れていた退避データの一覧",
+});
+
+/**
+ * 自動では捨てない退避（保存されていた元のデータの写し）。唯一の写しになりうるので、
+ * 容量が足りなくなっても自動では消さず、利用者がダウンロードしてから消す
+ */
+const PROTECTED_REASONS = Object.freeze([
+  REASONS.loadFailed,
+  REASONS.beforeRepair,
+  REASONS.beforeMigrate,
+  REASONS.quarantineBroken,
+]);
+
+function isProtectedEntry(e) {
+  return PROTECTED_REASONS.includes(e.reason);
+}
+
+/** 保存領域がいっぱいのときの例外か */
+function isQuotaError(e) {
+  if (!e || typeof e !== "object") return false;
+  return e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED" || e.code === 22 || e.code === 1014;
+}
+
+function errorText(e) {
+  return safeText(e && e.message ? e.message : e);
+}
+
+function isPlainObject(v) {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+/**
+ * 保存先とのやりとりをまとめたもの。
+ * 最後に読んだ・書いた保存データ（の文字列そのもの）を覚えておき、保存の前に照らし合わせる。
+ * @param {{
+ *   storage: {getItem(k:string):string|null, setItem(k:string, v:string):void},
+ *   channel?: "main"|"dev",
+ *   now: () => string,
+ *   newId: (prefix:string) => string,
+ *   migrations?: object, currentVersion?: number, quarantineMaxChars?: number
+ * }} deps
+ */
+function createLocalPersistence({
+  storage,
+  channel = "main",
+  now,
+  newId,
+  migrations,
+  currentVersion = SCHEMA_VERSION,
+  quarantineMaxChars = QUARANTINE_MAX_CHARS,
+}) {
+  const keys = storageKeys(channel);
+  /** 最後に読んだ・書いた保存データ（無ければ null） */
+  let expectedRaw = null;
+  /** 保存を止めている理由。null なら保存できる */
+  let block = null;
+  /** 退避が済むまで持っておく元のデータと、その退避の理由 */
+  let pending = null;
+
+  function read(key) {
+    return storage.getItem(key);
+  }
+
+  /**
+   * 退避データの一覧を読む。一覧そのものが壊れていたら、その文字列も返す（捨てないため）。
+   * 保存領域を読めなければ error を返す（空とみなして上書きしないため）
+   */
+  function readQuarantine() {
+    let text;
+    try {
+      text = read(keys.quarantine);
+    } catch (e) {
+      return { list: [], broken: null, error: e };
+    }
+    if (typeof text !== "string" || text === "") return { list: [], broken: null, error: null };
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      parsed = undefined;
+    }
+    if (!Array.isArray(parsed)) return { list: [], broken: text, error: null };
+    return { list: parseQuarantineList(text), broken: null, error: null };
+  }
+
+  const sizeOf = (l) => l.reduce((n, x) => n + x.raw.length, 0);
+
+  /**
+   * 退避用の保存キーに1件足す。
+   * - 同じ中身がもう退避してあれば、何もしない（起動のたびに日時だけ新しくならないように）
+   * - 元のデータの退避（読み込めなかった・直す前・移行する前）は、自動では捨てない。唯一の写しになりうるため
+   * - 容量が足りなければ、それ以外（保存できなかった入力の写しなど）を古いものから捨てて入れ直す。
+   *   捨てられるものが無くなっても入らなければ、失敗を返す
+   * @returns {{ok:true, existing?:boolean} | {ok:false, code:string, message:string}}
+   */
+  function quarantine(reason, raw, message = "") {
+    let entry;
+    try {
+      entry = makeQuarantineEntry({ at: now(), reason, message, raw });
+    } catch (e) {
+      return { ok: false, code: "badEntry", message: `退避するデータを作れませんでした（${errorText(e)}）` };
+    }
+    let { list, broken, error } = readQuarantine();
+    if (error) return { ok: false, code: "unavailable", message: `退避データの一覧を読めませんでした（${errorText(error)}）` };
+    if (broken !== null) {
+      list = [makeQuarantineEntry({ at: now(), reason: REASONS.quarantineBroken, message: "読めなくなっていた退避データの一覧", raw: broken })];
+    } else if (list.some((x) => x.raw === entry.raw)) {
+      return { ok: true, existing: true };
+    }
+    let maxChars = quarantineMaxChars;
+    let lastSize = Infinity;
+    let lastError = null;
+    for (;;) {
+      const next = pushQuarantine(list, entry, { max: QUARANTINE_MAX, maxChars, isProtected: isProtectedEntry });
+      const size = sizeOf(next);
+      if (size >= lastSize) break; // もう捨てられるものが無い
+      lastSize = size;
+      try {
+        storage.setItem(keys.quarantine, JSON.stringify(next));
+        return { ok: true };
+      } catch (e) {
+        lastError = e;
+        if (!isQuotaError(e)) break;
+        maxChars = size - 1;
+      }
+    }
+    return {
+      ok: false,
+      code: isQuotaError(lastError) ? "quota" : "writeFailed",
+      message: isQuotaError(lastError)
+        ? "保存領域がいっぱいで、退避できませんでした"
+        : `退避できませんでした（${errorText(lastError)}）`,
+    };
+  }
+
+  function isNewerVersion(text) {
+    try {
+      const o = JSON.parse(text);
+      return isPlainObject(o) && Number.isInteger(o.schemaVersion) && o.schemaVersion > currentVersion;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 起動時に保存データを読む。
+   * @returns {{kind:"empty", data:object}
+   *   | {kind:"ok", raw:string, data:object, report:object, fromVersion:number, migratedSteps:number[], backup:object|null}
+   *   | {kind:"error", raw:string, error:{code:string, message:string}, data:object|null, report:object|null}
+   *   | {kind:"unavailable", data:object, message:string}}
+   */
+  function load() {
+    let raw;
+    try {
+      raw = read(keys.data);
+    } catch (e) {
+      block = {
+        code: "unavailable",
+        message: `保存領域を読めません（${errorText(e)}）。この画面で入力した内容は保存されません`,
+      };
+      return { kind: "unavailable", data: emptyData(now()), message: block.message };
+    }
+    expectedRaw = raw;
+    block = null;
+    pending = null;
+    if (raw === null) return { kind: "empty", data: emptyData(now()) };
+
+    const r = loadFromText(raw, { now: now(), newId, migrations, currentVersion });
+    if (!r.ok) {
+      pending = { raw, reason: REASONS.loadFailed, message: `読み込めなかった保存データ（${r.error.message}）` };
+      block = { code: "loadFailed", message: "保存データを読み込めなかったので、保存を止めています" };
+      return { kind: "error", raw, error: r.error, data: r.data ?? null, report: r.report ?? null };
+    }
+    const result = {
+      kind: "ok",
+      raw,
+      data: r.data,
+      report: r.report,
+      fromVersion: r.fromVersion,
+      migratedSteps: r.migratedSteps,
+      backup: null,
+    };
+    if (r.needsBackup) {
+      const migrated = r.migratedSteps.length > 0;
+      pending = {
+        raw,
+        reason: migrated ? REASONS.beforeMigrate : REASONS.beforeRepair,
+        message: migrated ? `データバージョン${r.fromVersion}のデータ（移行する前）` : "読み込むときに値を捨てる前の元のデータ",
+      };
+      result.backup = quarantine(pending.reason, raw, pending.message);
+      if (result.backup.ok) {
+        pending = null;
+      } else {
+        block = { code: "backupFailed", message: "元のデータを退避できなかったので、保存を止めています" };
+      }
+    }
+    return result;
+  }
+
+  /** 元のデータの退避が済むまで止めているか */
+  function waitingForBackup() {
+    return pending !== null && block !== null && (block.code === "loadFailed" || block.code === "backupFailed");
+  }
+
+  /**
+   * 元のデータを退避してから、保存を再開する（「直した内容で続ける」「空で始める」の前に呼ぶ）。
+   * 退避できなければ止めたまま。
+   */
+  function releaseWithBackup() {
+    if (!waitingForBackup()) return { ok: true };
+    const q = quarantine(pending.reason, pending.raw, pending.message);
+    if (!q.ok) return q;
+    block = null;
+    pending = null;
+    return { ok: true };
+  }
+
+  /** 退避せずに保存を再開する（利用者が元のデータをダウンロードして、続けると選んだとき） */
+  function releaseWithoutBackup() {
+    if (waitingForBackup()) {
+      block = null;
+      pending = null;
+    }
+    return { ok: true };
+  }
+
+  /**
+   * データを保存する。保存前チェックと、保存先との照らし合わせをしてから書く。
+   * @returns {{ok:true, savedAt:string, repaired:{data:object, report:object}|null, restored:boolean}
+   *   | {ok:false, code:string, message:string, blocked?:boolean, report?:object|null, quarantined?:boolean}}
+   */
+  function save(data) {
+    if (block) return { ok: false, code: block.code, message: block.message, blocked: true };
+    const at = now();
+
+    // 1. 保存前チェック（アプリ自身の不具合で、壊れたデータを書かないため）
+    let check = null;
+    try {
+      check = normalizeData(data, { now: at, newId });
+    } catch {
+      check = null;
+    }
+    if (!check || hasErrors(check.report)) {
+      const q = quarantine(REASONS.saveFailed, data, "保存前チェックで、直せない問題が見つかったデータ");
+      return {
+        ok: false,
+        code: "invalidData",
+        message: q.ok
+          ? "保存前チェックで、直せない問題が見つかったので保存しませんでした（この内容は退避しました）"
+          : "保存前チェックで、直せない問題が見つかったので保存しませんでした（退避もできませんでした。JSON Exportしてください）",
+        report: check ? check.report : null,
+        quarantined: q.ok,
+      };
+    }
+    let toSave = data;
+    let repaired = null;
+    if (check.report.items.length > 0) {
+      if (needsBackup(check.report)) {
+        const q = quarantine(REASONS.beforeRepair, data, "保存前チェックで値を捨てる前のデータ");
+        if (!q.ok) {
+          return {
+            ok: false,
+            code: "backupFailed",
+            message: "保存前チェックで直す前のデータを退避できなかったので、保存しませんでした。JSON Exportしてください",
+            report: check.report,
+          };
+        }
+      }
+      toSave = check.data;
+      repaired = { data: check.data, report: check.report };
+    }
+
+    // 2. 保存先が、最後に読んだ・書いたときから変わっていないか
+    let current;
+    try {
+      current = read(keys.data);
+    } catch (e) {
+      return { ok: false, code: "unavailable", message: `保存領域を読めません（${errorText(e)}）` };
+    }
+    let restored = false;
+    if (current !== expectedRaw) {
+      if (current === null) {
+        // 保存データが消えていた（ブラウザが消したなど）。画面の内容で保存し直す
+        restored = true;
+      } else {
+        const newer = isNewerVersion(current);
+        const q = quarantine(
+          REASONS.conflict,
+          toSave,
+          newer ? "新しい版のアプリが保存していたため、保存しなかった入力" : "別の画面（タブ）が保存していたため、保存しなかった入力",
+        );
+        block = newer
+          ? { code: "newerVersion", message: "新しい版のアプリで保存されたデータがあるため、上書きせずに保存を止めました" }
+          : { code: "conflict", message: "別の画面（タブ）で保存されたデータがあるため、上書きせずに保存を止めました" };
+        return { ok: false, code: block.code, message: block.message, quarantined: q.ok };
+      }
+    }
+
+    // 3. 書く
+    let json;
+    try {
+      json = toJson(serialize(toSave, { now: at }));
+    } catch (e) {
+      return { ok: false, code: "serializeFailed", message: `保存する形にできませんでした（${errorText(e)}）` };
+    }
+    try {
+      storage.setItem(keys.data, json);
+    } catch (e) {
+      const quota = isQuotaError(e);
+      return {
+        ok: false,
+        code: quota ? "quota" : "writeFailed",
+        message: quota
+          ? "保存領域がいっぱいで保存できませんでした。JSON Exportでバックアップを取ってください"
+          : `保存できませんでした（${errorText(e)}）`,
+      };
+    }
+
+    // 4. 読み直して確かめる
+    let back;
+    try {
+      back = read(keys.data);
+    } catch {
+      back = undefined;
+    }
+    if (back !== json) {
+      block = {
+        code: "verifyFailed",
+        message: "保存した内容を読み直せなかったので、保存を止めています。JSON Exportでバックアップを取ってください",
+      };
+      return { ok: false, code: block.code, message: block.message };
+    }
+    expectedRaw = json;
+    return { ok: true, savedAt: at, repaired, restored };
+  }
+
+  /** 退避データの一覧（新しい順） */
+  function listQuarantine() {
+    const { list, broken } = readQuarantine();
+    if (broken !== null) return [{ at: "", reason: REASONS.quarantineBroken, message: "読めなくなっていた退避データの一覧", raw: broken }];
+    return list;
+  }
+
+  function removeKey(key) {
+    if (typeof storage.removeItem === "function") storage.removeItem(key);
+    else storage.setItem(key, "");
+  }
+
+  /**
+   * 退避データを1件消す（利用者が消すと選んだとき）。中身（raw）が同じものを消す。
+   * @returns {{ok:true} | {ok:false, message:string}}
+   */
+  function deleteQuarantine(raw) {
+    const { list, broken, error } = readQuarantine();
+    if (error) return { ok: false, message: `退避データの一覧を読めませんでした（${errorText(error)}）` };
+    try {
+      if (broken !== null) {
+        if (broken === raw) removeKey(keys.quarantine);
+        return { ok: true };
+      }
+      const next = list.filter((x) => x.raw !== raw);
+      if (next.length === list.length) return { ok: true };
+      if (next.length === 0) removeKey(keys.quarantine);
+      else storage.setItem(keys.quarantine, JSON.stringify(next));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, message: `消せませんでした（${errorText(e)}）` };
+    }
+  }
+
+  /* ---------- クイック入力の書きかけ ---------- */
+
+  /** 書きかけを読む（無い・読めなければ null） */
+  function readDraft() {
+    try {
+      const o = JSON.parse(read(keys.draft) || "null");
+      return isPlainObject(o) ? o : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** 書きかけを書く。null なら消す */
+  function writeDraft(draft) {
+    try {
+      if (draft === null) removeKey(keys.draft);
+      else storage.setItem(keys.draft, JSON.stringify(draft));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, message: `書きかけを保存できませんでした（${errorText(e)}）` };
+    }
+  }
+
+  /* ---------- 表示設定など（本体と分けて保存する。Undo・Import の対象外） ---------- */
+
+  // lastExportAt: 最後に JSON Export した日時 / quarantineSeenAt: 退避データのお知らせを閉じた日時 /
+  // homeTipClosedAt: 「ホーム画面に追加して使う」お知らせを閉じた日時
+  const PREF_TIMESTAMPS = Object.freeze(["lastExportAt", "quarantineSeenAt", "homeTipClosedAt"]);
+
+  function readPrefsObject() {
+    try {
+      const o = JSON.parse(read(keys.prefs) ?? "null");
+      return isPlainObject(o) ? o : {};
+    } catch {
+      return {};
+    }
+  }
+
+  /** @returns {{lastExportAt:string|null, quarantineSeenAt:string|null, homeTipClosedAt:string|null}} */
+  function readPrefs() {
+    const o = readPrefsObject();
+    const out = {};
+    for (const k of PREF_TIMESTAMPS) out[k] = canonicalTimestamp(o[k]) || null;
+    return out;
+  }
+
+  /** 表示設定などを書く（知らない項目は残す。新しい版のアプリが足した項目を消さないため） */
+  function writePrefs(patch) {
+    const next = { ...readPrefsObject(), ...patch };
+    try {
+      storage.setItem(keys.prefs, JSON.stringify(next));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, message: `設定を保存できませんでした（${errorText(e)}）` };
+    }
+  }
+
+  return {
+    keys,
+    load,
+    save,
+    quarantine,
+    releaseWithBackup,
+    releaseWithoutBackup,
+    waitingForBackup,
+    listQuarantine,
+    deleteQuarantine,
+    readDraft,
+    writeDraft,
+    readPrefs,
+    writePrefs,
+    /** 保存を止めている理由（null なら保存できる） */
+    blocked: () => block,
+    /** 退避を待っている元のデータ（ダウンロード用） */
+    pendingRaw: () => (pending ? pending.raw : null),
+  };
+}
+__export(__exports, { "QUARANTINE_MAX": () => QUARANTINE_MAX, "QUARANTINE_MAX_CHARS": () => QUARANTINE_MAX_CHARS, "REASONS": () => REASONS, "REASON_LABELS": () => REASON_LABELS, "PROTECTED_REASONS": () => PROTECTED_REASONS, "isQuotaError": () => isQuotaError, "createLocalPersistence": () => createLocalPersistence });
+});
+__define("store/actions.js", function (__exports, __require) {
+"use strict";
+/*
+ * アクションを作る関数（DOM非依存・純粋関数）
+ *
+ * 画面の入力を確かめ、ID と日時を付けてアクションにする。
+ * 入力に問題があれば、アクションの代わりに画面へ出す文言を返す（例外にはしない）。
+ */
+
+const { repairPartialDate } = __require("core/dates.js");
+const { createEntity } = __require("core/model.js");
+const { safeText } = __require("core/normalize.js");
+
+function text(v) {
+  return typeof v === "string" ? v : "";
+}
+
+/** ラベルの一覧を、前後の空白を除き、空と重複を除いた形にする（並びは保つ） */
+function cleanLabels(list) {
+  const out = [];
+  for (const v of Array.isArray(list) ? list : []) {
+    const s = text(v).trim();
+    if (s !== "" && !out.includes(s)) out.push(s);
+  }
+  return out;
+}
+
+/**
+ * 日付の入力を、精度つき日付にする。空なら ""（日付不明）。読めなければ null。
+ * 例: "2024/6" → "2024-06"、"２０２６年１０月１日" → "2026-10-01"
+ */
+function parseDateInput(v) {
+  const s = text(v).trim();
+  if (s === "") return "";
+  return repairPartialDate(s);
+}
+
+/**
+ * クイック入力（タイトル・日付・カテゴリ・走り書き）から、未整理の経験を1件足すアクションを作る。
+ * @param {{title?:string, date?:string, categories?:string[], memo?:string}} input
+ * @param {{id:string, now:string}} meta
+ * @returns {{ok:true, action:{type:"experience/add", entity:object}} | {ok:false, errors:{field:string|null, message:string}[]}}
+ */
+function quickAddExperience(input, { id, now }) {
+  const errors = [];
+  const title = text(input && input.title).trim();
+  const memo = text(input && input.memo).trim();
+  if (title === "" && memo === "") {
+    errors.push({ field: "title", message: "タイトルか走り書きのどちらかを入れてください" });
+  }
+  const start = parseDateInput(input && input.date);
+  if (start === null) {
+    errors.push({ field: "date", message: "日付が読めません。例：2026-10-01、2024-06、2024（空にすると日付不明）" });
+  }
+  if (errors.length > 0) return { ok: false, errors };
+  try {
+    const entity = createEntity("experiences", { id, now }, {
+      title,
+      start,
+      categories: cleanLabels(input && input.categories),
+      memo,
+      inbox: true,
+    });
+    return { ok: true, action: { type: "experience/add", entity } };
+  } catch (e) {
+    return { ok: false, errors: [{ field: null, message: `記録できませんでした（${safeText(e && e.message)}）` }] };
+  }
+}
+__export(__exports, { "cleanLabels": () => cleanLabels, "parseDateInput": () => parseDateInput, "quickAddExperience": () => quickAddExperience });
+});
+__define("store/reducer.js", function (__exports, __require) {
+"use strict";
+/*
+ * reducer（DOM非依存・純粋関数）
+ *
+ * 画面からの変更は、すべて「アクション」として受け取り、新しいデータを返す。元のデータは書き換えない。
+ * 変わっていない部分は前のデータと共有するので、Undo（区切り2）は前のデータをそのまま持つだけで済む。
+ * ID と日時は、アクションを作る側（actions.js）で決めて渡す。
+ * 不正なアクションは例外にする（画面側の不具合を早く見つけるため。データは変わらない）。
+ *
+ * アクションの一覧:
+ *   experience/add  { entity }        経験を1件足す（entity は createEntity で作ったもの）
+ *   data/replace    { data, reason }  データ全体を置き換える（読み込み直し・保存前チェックで直したときなど）
+ */
+
+const { safeText } = __require("core/normalize.js");
+
+/**
+ * @param {import("../core/model.js").CareerData} data
+ * @param {{type:string}} action
+ * @returns {import("../core/model.js").CareerData}
+ */
+function reduce(data, action) {
+  const type = action && action.type;
+  switch (type) {
+    case "experience/add":
+      return addRow(data, "experiences", action.entity);
+    case "data/replace":
+      if (!action.data || typeof action.data !== "object") throw new Error("置き換えるデータがありません");
+      return action.data;
+    default:
+      throw new Error(`未知のアクションです: ${safeText(type)}`);
+  }
+}
+
+function addRow(data, collection, entity) {
+  if (!entity || typeof entity.id !== "string") throw new Error(`${collection} に足すデータに ID がありません`);
+  if (data[collection].some((e) => e.id === entity.id)) throw new Error(`ID が重なっています: ${entity.id}`);
+  return { ...data, [collection]: [...data[collection], entity] };
+}
+__export(__exports, { "reduce": () => reduce });
+});
+__define("store/selectors.js", function (__exports, __require) {
+"use strict";
+/*
+ * selectors（DOM非依存・純粋関数）
+ *
+ * データから、画面に出す一覧・件数・表示用の文字を作る。
+ * 「今日」は呼び出し側が端末のローカル日付で作って渡す（{y, m, d}）。
+ */
+
+const { comparePartialDates, parsePartialDate } = __require("core/dates.js");
+
+/** 生きている（削除されていない）経験 */
+function liveExperiences(data) {
+  return data.experiences.filter((e) => e.deletedAt === null);
+}
+
+/**
+ * 経験を新しい順に並べる比較。
+ * 開始の新しい順。日付不明（""）は最後。同じ開始なら記録日時の新しい順、最後は ID で決める（並びを毎回同じにする）。
+ */
+function compareNewestFirst(a, b) {
+  const ae = a.start === "";
+  const be = b.start === "";
+  if (ae !== be) return ae ? 1 : -1;
+  const c = comparePartialDates(b.start, a.start);
+  if (c !== 0) return c;
+  if (a.createdAt !== b.createdAt) return a.createdAt < b.createdAt ? 1 : -1;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+/** 生きている経験を新しい順に */
+function experiencesNewestFirst(data) {
+  return liveExperiences(data).sort(compareNewestFirst);
+}
+
+/** 経験の件数と、そのうち未整理の件数 */
+function experienceCounts(data) {
+  const live = liveExperiences(data);
+  return { total: live.length, inbox: live.filter((e) => e.inbox).length };
+}
+
+/** 精度つき日付の表示（"2024-06-15" → "2024/06/15"、"2024" → "2024"、"" → ""） */
+function formatPartialDate(s) {
+  return parsePartialDate(s) ? s.replace(/-/g, "/") : "";
+}
+
+/** 経験の期間の表示。例: "2024/06"、"2024/06〜2024/09"、"2024/06〜継続中"、日付不明なら "" */
+function formatSpan(exp) {
+  const s = formatPartialDate(exp.start);
+  const e = formatPartialDate(exp.end);
+  if (e !== "") return `${s}〜${e}`;
+  if (exp.ongoing) return `${s}〜継続中`;
+  return s;
+}
+
+/** 走り書きの1行目（一覧でタイトルが空のときの見出しに使う） */
+function firstLine(s, max = 40) {
+  const line = (typeof s === "string" ? s : "").split(/\r?\n/).find((l) => l.trim() !== "") || "";
+  const t = line.trim();
+  return t.length > max ? t.slice(0, max) + "…" : t;
+}
+
+function dayNumber({ y, m, d }) {
+  return Date.UTC(y, m - 1, d) / 86400000;
+}
+
+/** 2つのローカル日付（{y, m, d}）の差（日数）。to − from */
+function daysBetween(from, to) {
+  return Math.round(dayNumber(to) - dayNumber(from));
+}
+
+/** {y, m, d} → "YYYY-MM-DD" */
+function ymdText({ y, m, d }) {
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+/** 何日たったら「最終Export」を目立たせるか */
+const EXPORT_WARN_DAYS = 7;
+
+/**
+ * 「最終Exportから○日」の表示。
+ * @param {{y:number, m:number, d:number}|null} lastExportDay  最終Exportのローカル日付（無ければ null）
+ * @param {{y:number, m:number, d:number}} today
+ * @param {boolean} hasData  経験が1件以上あるか（無ければ、まだExportしていなくても目立たせない）
+ * @returns {{text:string, warn:boolean, days:number|null}}
+ */
+function exportAge(lastExportDay, today, hasData) {
+  if (!lastExportDay) return { text: "まだExportしていません", warn: hasData, days: null };
+  const days = Math.max(0, daysBetween(lastExportDay, today));
+  const text = days === 0 ? "最終Export：今日" : `最終Exportから${days}日`;
+  return { text, warn: hasData && days >= EXPORT_WARN_DAYS, days };
+}
+__export(__exports, { "liveExperiences": () => liveExperiences, "compareNewestFirst": () => compareNewestFirst, "experiencesNewestFirst": () => experiencesNewestFirst, "experienceCounts": () => experienceCounts, "formatPartialDate": () => formatPartialDate, "formatSpan": () => formatSpan, "firstLine": () => firstLine, "daysBetween": () => daysBetween, "ymdText": () => ymdText, "EXPORT_WARN_DAYS": () => EXPORT_WARN_DAYS, "exportAge": () => exportAge });
+});
+__define("store/store.js", function (__exports, __require) {
+"use strict";
+/*
+ * store（状態の入れ物。DOM非依存）
+ *
+ * reducer にアクションを渡して新しいデータを作り、購読している画面へ知らせる。
+ * Undo/Redo（区切り2）は、ここで前のデータを持つ形で足す。
+ */
+
+/**
+ * @param {object} initialData  正規化済みのデータ
+ * @param {{reduce:(data:object, action:object)=>object}} deps
+ */
+function createStore(initialData, { reduce }) {
+  let data = initialData;
+  const listeners = new Set();
+  return {
+    getData() {
+      return data;
+    },
+    /** アクションを適用する。reducer が例外を投げたら、データは変わらない */
+    dispatch(action) {
+      const next = reduce(data, action);
+      if (next === data) return data;
+      data = next;
+      for (const fn of [...listeners]) fn(data, action);
+      return data;
+    },
+    /** 変更を知らせてもらう。戻り値の関数で解除する */
+    subscribe(fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
+  };
+}
+__export(__exports, { "createStore": () => createStore });
+});
+__define("ui/app.js", function (__exports, __require) {
+"use strict";
+/*
+ * アプリ本体の画面（Phase 2 区切り1）
+ *   ヘッダー  保存状態・最終Exportからの日数・JSON Export・データ
+ *   お知らせ  読み込み時の報告、保存の失敗、退避データ、書きかけ、ホーム画面に追加して使うこと
+ *   クイック入力と、経験の一覧
+ *
+ * 保存の流れ:
+ *   データの変更は store に送り、自動保存（まとめ待ち）で localStorage に書く。
+ *   「記録する」は待たずに保存し、保存できなければ記録を取り消して、入力を欄に残す（入力を失わないため）。
+ *   クイック入力の書きかけは、入力のたびに別のキーへ保存し、次に開いたときに戻す（iPhone でアプリが終了しても残す）。
+ *   画面が隠れたとき・閉じる前には、待たずに保存する。
+ *   別の画面（タブ）が保存したら、こちらに未保存の変更が無ければ読み直し、あれば食い違いとして保存を止める。
+ */
+
+const { SCHEMA_VERSION } = __require("core/constants.js");
+const { countByLevel } = __require("core/normalize.js");
+const { createAutosaver } = __require("persist/autosave.js");
+const { exportFileName, exportText, rawFileName } = __require("persist/export.js");
+const { REASON_LABELS } = __require("persist/local.js");
+const { quickAddExperience } = __require("store/actions.js");
+const { reduce } = __require("store/reducer.js");
+const { experienceCounts, exportAge } = __require("store/selectors.js");
+const { createStore } = __require("store/store.js");
+const { CHANNEL_LABELS } = __require("ui/build-info.js");
+const { h, setChildren } = __require("ui/dom.js");
+const { isStandalone, localDateTimeText, localDayOf, localTimeText, requestPersistence } = __require("ui/env.js");
+const { deliverTextFile } = __require("ui/files.js");
+const { openDataPanel } = __require("ui/views/data-panel.js");
+const { renderExperienceList } = __require("ui/views/experience-list.js");
+const { createQuickInput } = __require("ui/views/quick-input.js");
+const { reportDetails } = __require("ui/views/report.js");
+
+const SAVE_STATUS = Object.freeze({
+  idle: ["ok", "保存済み"],
+  saved: ["ok", "保存済み"],
+  pending: ["pending", "保存待ち…"],
+  error: ["error", "保存できません"],
+  blocked: ["error", "保存を止めています"],
+});
+
+/** 保存し直さなくてよい置き換え（保存前チェックで直した・別の画面の保存を読み直した・記録を取り消した） */
+const QUIET_REPLACE = new Set(["repaired", "external", "rollback"]);
+
+const DRAFT_DELAY = 400;
+
+/**
+ * @param {HTMLElement} root
+ * @param {{
+ *   data: object, env: object, persistence: object, build: {channel:string, commit:string, builtAt:string}, win: Window,
+ *   load?: object|null,           起動時の読み込みの結果（お知らせを出すため）
+ *   notices?: object[],           最初に出すお知らせ
+ *   saveNow?: boolean,            始めてすぐに保存する（読み込めなかったデータの代わりに使うとき）
+ * }} opts
+ */
+function startApp(root, { data, env, persistence, build, win, load = null, notices = [], saveNow = false }) {
+  const doc = win.document;
+  const store = createStore(data, { reduce });
+  const blockedAtStart = persistence.blocked();
+  const ui = {
+    notices: [],
+    save: blockedAtStart ? { status: "blocked", message: blockedAtStart.message, at: null } : { status: "idle", message: "", at: null },
+    dirtyIsQuarantined: false,
+    draftFailed: false,
+    prefs: persistence.readPrefs(),
+    expanded: new Set(),
+    protection: null,
+    panel: null,
+  };
+  let noticeSeq = 0;
+  let toastTimer = null;
+  let draftTimer = null;
+  /** このタブの目印（書きかけを、どのタブが書いたかを見分ける） */
+  const tabId = env.newId("tab");
+
+  /* ---------- 骨組み ---------- */
+
+  const header = h("header", { class: "app-header" });
+  const noticesEl = h("div", { class: "notices" });
+  const listEl = h("section", { class: "exp-section", "aria-label": "経験の一覧" });
+  const toastEl = h("div", { class: "toast", role: "status", "aria-live": "polite", hidden: true });
+  const quick = createQuickInput({
+    categories: data.settings.lists.categories,
+    today: () => env.today(),
+    onSubmit: submitQuick,
+    onClose: closeQuick,
+    onChange: scheduleDraft,
+  });
+  const sheet = h("section", { class: "qi-sheet", "aria-label": "クイック入力" }, quick.el);
+  const fab = h("button", { type: "button", class: "fab only-narrow", onclick: openQuick }, "＋ 記録する");
+  setChildren(root, header, h("main", { class: "app-main" }, noticesEl, sheet, listEl), fab, toastEl);
+
+  /* ---------- 保存 ---------- */
+
+  const autosaver = createAutosaver({
+    save: () => persistence.save(store.getData()),
+    onResult: onSaveResult,
+    setTimer: (fn, ms) => win.setTimeout(fn, ms),
+    clearTimer: (t) => win.clearTimeout(t),
+  });
+
+  function onSaveResult(r) {
+    if (r.ok) {
+      ui.save = { status: "saved", message: "", at: r.savedAt };
+      removeNotice("save");
+      if (r.repaired) {
+        store.dispatch({ type: "data/replace", data: r.repaired.data, reason: "repaired" });
+        addNotice({
+          key: "repaired",
+          level: "warn",
+          text: `保存前チェックで、${r.repaired.report.items.length}件を直してから保存しました。`,
+          details: r.repaired.report.items,
+          dismissible: true,
+        });
+      }
+      if (r.restored) {
+        addNotice({ key: "restored", level: "warn", text: "保存データが消えていたので、画面の内容で保存し直しました。", dismissible: true });
+      }
+    } else {
+      ui.save = { status: persistence.blocked() ? "blocked" : "error", message: r.message, at: null };
+      if (r.quarantined !== undefined) ui.dirtyIsQuarantined = r.quarantined === true;
+      // 止めたあとの保存の試みでは、最初の知らせ（退避できたかどうかを含む）をそのまま残す
+      const keepFirst = r.blocked === true && ui.notices.some((n) => n.key === "save");
+      if (!keepFirst) addNotice(saveFailureNotice(r));
+    }
+    renderHeader();
+    renderBlocked();
+  }
+
+  function saveFailureNotice(r) {
+    const reload = { label: "再読み込み", run: () => win.location.reload() };
+    const exp = { label: "JSON Export", run: doExport };
+    if (r.code === "conflict" || r.code === "newerVersion") {
+      if (r.quarantined === false) {
+        return {
+          key: "save",
+          level: "error",
+          text: `${r.message}。この画面の内容は退避もできなかったため、画面の中にしかありません。先に JSON Export してから、再読み込みしてください。`,
+          actions: [{ ...exp, primary: true }, reload],
+        };
+      }
+      return {
+        key: "save",
+        level: "error",
+        text: `${r.message}。この画面の内容は退避しました（「データ」からダウンロードできます）。再読み込みすると、別の画面で保存された内容を開きます。`,
+        actions: [{ ...reload, primary: true }, exp],
+      };
+    }
+    if (r.code === "quota") {
+      return {
+        key: "save",
+        level: "error",
+        text: `${r.message}。「データ」で古い退避データをダウンロードしてから削除すると、空きができます。`,
+        actions: [{ ...exp, primary: true }, { label: "データを開く", run: openPanel }],
+      };
+    }
+    return { key: "save", level: "error", text: r.message, details: r.report ? r.report.items : null, actions: [{ ...exp, primary: true }] };
+  }
+
+  store.subscribe((_data, action) => {
+    if (!(action.type === "data/replace" && QUIET_REPLACE.has(action.reason))) {
+      ui.dirtyIsQuarantined = false;
+      if (!persistence.blocked()) ui.save = { status: "pending", message: "", at: null };
+      autosaver.schedule();
+    }
+    renderList();
+    renderHeader();
+  });
+
+  /* ---------- クイック入力の書きかけ ----------
+   * 書きかけのキーは、同じ版のタブすべてで1つ。消してよいのは、このタブが書いた（または引き継いだ）書きかけだけ
+   * （PC で複数のタブを開いているとき、空のタブを閉じただけで、別のタブの書きかけを消さないため）。
+   */
+
+  function scheduleDraft() {
+    win.clearTimeout(draftTimer);
+    draftTimer = win.setTimeout(saveDraft, DRAFT_DELAY);
+  }
+
+  function showDraftWarning() {
+    quick.setDraftWarning(ui.draftFailed ? "書きかけを保存できません（保存領域がいっぱいの可能性があります）。このまま閉じると、入力は消えます。" : null);
+  }
+
+  function writeOwnDraft() {
+    const r = persistence.writeDraft({ ...quick.getValues(), at: env.now(), tabId });
+    ui.draftFailed = !r.ok;
+    showDraftWarning();
+  }
+
+  /** このタブが書いた書きかけなら消す */
+  function discardOwnDraft() {
+    const stored = persistence.readDraft();
+    if (stored && stored.tabId === tabId) persistence.writeDraft(null);
+    ui.draftFailed = false;
+    showDraftWarning();
+  }
+
+  function saveDraft() {
+    win.clearTimeout(draftTimer);
+    draftTimer = null;
+    if (quick.hasInput()) writeOwnDraft();
+    else discardOwnDraft();
+  }
+
+  /* ---------- 画面の出入り ---------- */
+
+  win.addEventListener("pagehide", () => {
+    saveDraft();
+    autosaver.flush();
+  });
+  // Chrome がタブを凍結・破棄する前（pagehide が来ないことがある）
+  doc.addEventListener("freeze", () => {
+    saveDraft();
+    autosaver.flush();
+  });
+  doc.addEventListener("visibilitychange", () => {
+    if (doc.visibilityState === "hidden") {
+      saveDraft();
+      autosaver.flush();
+    } else {
+      // 開いたまま日付をまたいだときのため
+      quick.refreshDate();
+      renderHeader();
+    }
+  });
+  win.addEventListener("beforeunload", (ev) => {
+    saveDraft();
+    autosaver.flush();
+    const unsavedData = autosaver.isDirty() && !ui.dirtyIsQuarantined;
+    if (unsavedData || ui.draftFailed) {
+      ev.preventDefault();
+      ev.returnValue = "";
+    }
+  });
+
+  /** 別の画面（タブ）が書きかけを消したとき: こちらの入力が、消された書きかけと同じなら、記録されたものとして空にする */
+  function onDraftRemovedElsewhere(oldValue) {
+    let old = null;
+    try {
+      old = JSON.parse(oldValue || "null");
+    } catch {
+      old = null;
+    }
+    if (!old || typeof old !== "object" || !quick.hasInput()) return;
+    const v = quick.getValues();
+    const cats = Array.isArray(old.categories) ? old.categories : [];
+    const same =
+      v.title === old.title &&
+      v.memo === old.memo &&
+      v.categories.length === cats.length &&
+      v.categories.every((c) => cats.includes(c));
+    if (same) {
+      quick.clear();
+      removeNotice("draft");
+      toast("別の画面（タブ）で記録されたので、書きかけを空にしました");
+    }
+  }
+
+  // 別の画面（タブ）が保存したとき
+  win.addEventListener("storage", (ev) => {
+    if (ev.key === persistence.keys.draft) {
+      if (ev.newValue === null) onDraftRemovedElsewhere(ev.oldValue);
+      return;
+    }
+    if (ev.key !== null && ev.key !== persistence.keys.data) return;
+    if (persistence.blocked()) return;
+    if (autosaver.isDirty()) {
+      // こちらにも未保存の変更がある。保存しようとすれば食い違いとして止まり、こちらの内容は退避される
+      autosaver.flush();
+      return;
+    }
+    const r = persistence.load();
+    if (r.kind === "ok") {
+      store.dispatch({ type: "data/replace", data: r.data, reason: "external" });
+      ui.save = { status: "idle", message: "", at: null };
+      showLoadNotices(r);
+      toast("別の画面（タブ）で保存された内容を読み込みました");
+    } else if (r.kind === "empty") {
+      // 保存データが消された。画面の内容で保存し直す
+      autosaver.schedule();
+      autosaver.flush();
+    } else {
+      ui.save = { status: "blocked", message: r.message || r.error.message, at: null };
+      addNotice({
+        key: "save",
+        level: "error",
+        text: `別の画面（タブ）で保存されたデータを読み込めません（${r.kind === "error" ? r.error.message : r.message}）。再読み込みしてください。`,
+        actions: [{ label: "再読み込み", primary: true, run: () => win.location.reload() }],
+      });
+    }
+    renderHeader();
+    renderBlocked();
+  });
+
+  /* ---------- お知らせ ---------- */
+
+  function addNotice(n) {
+    const notice = {
+      id: ++noticeSeq,
+      key: n.key || null,
+      level: n.level,
+      text: n.text,
+      details: n.details && n.details.length > 0 ? n.details : null,
+      actions: n.actions || [],
+      dismissible: n.dismissible === true,
+      onDismiss: n.onDismiss || null,
+    };
+    if (notice.key) ui.notices = ui.notices.filter((x) => x.key !== notice.key);
+    ui.notices.push(notice);
+    renderNotices();
+  }
+
+  function removeNotice(key) {
+    const before = ui.notices.length;
+    ui.notices = ui.notices.filter((x) => x.key !== key);
+    if (ui.notices.length !== before) renderNotices();
+  }
+
+  function renderNotices() {
+    setChildren(
+      noticesEl,
+      ui.notices.map((n) =>
+        h(
+          "div",
+          { class: ["notice", `notice-${n.level}`], role: n.level === "error" ? "alert" : "status", dataset: { key: n.key || "" } },
+          h("p", { class: "notice-text" }, n.text),
+          n.details ? reportDetails(n.details) : null,
+          n.actions.length > 0 || n.dismissible
+            ? h(
+                "div",
+                { class: "notice-actions" },
+                n.actions.map((a) => h("button", { type: "button", class: ["btn", "btn-small", a.primary && "btn-primary"], onclick: a.run }, a.label)),
+                n.dismissible
+                  ? h(
+                      "button",
+                      {
+                        type: "button",
+                        class: "btn btn-small btn-ghost",
+                        onclick: () => {
+                          ui.notices = ui.notices.filter((x) => x.id !== n.id);
+                          renderNotices();
+                          if (n.onDismiss) n.onDismiss();
+                        },
+                      },
+                      "閉じる",
+                    )
+                  : null,
+              )
+            : null,
+        ),
+      ),
+    );
+  }
+
+  function toast(text) {
+    toastEl.textContent = text;
+    toastEl.hidden = false;
+    win.clearTimeout(toastTimer);
+    toastTimer = win.setTimeout(() => {
+      toastEl.hidden = true;
+    }, 3500);
+  }
+
+  /* ---------- ヘッダー ---------- */
+
+  function currentExportAge() {
+    const counts = experienceCounts(store.getData());
+    return exportAge(localDayOf(ui.prefs.lastExportAt), env.today(), counts.total > 0);
+  }
+
+  function renderHeader() {
+    const [cls, label] = SAVE_STATUS[ui.save.status];
+    const text = ui.save.status === "saved" && ui.save.at ? `${label} ${localTimeText(ui.save.at)}` : label;
+    const age = currentExportAge();
+    setChildren(
+      header,
+      h(
+        "div",
+        { class: "header-top" },
+        h(
+          "div",
+          { class: "brand" },
+          h("span", { class: "brand-name" }, "キャリアグラフ"),
+          build.channel === "dev" ? h("span", { class: "badge badge-dev" }, "開発版") : null,
+        ),
+        h(
+          "span",
+          { class: ["save-status", `is-${cls}`], title: ui.save.message || null },
+          h("span", { class: "dot", "aria-hidden": "true" }),
+          text,
+        ),
+      ),
+      h(
+        "div",
+        { class: "header-tools" },
+        h("span", { class: ["export-age", age.warn && "is-warn"] }, age.text),
+        h("button", { type: "button", class: "btn btn-small", onclick: doExport }, "JSON Export"),
+        h("button", { type: "button", class: "btn btn-small", onclick: openPanel }, "データ"),
+      ),
+    );
+  }
+
+  function renderBlocked() {
+    quick.setBlocked(persistence.blocked() ? "保存を止めているあいだは記録できません（上のお知らせを見てください）。入力は消さずに残します。" : null);
+  }
+
+  function renderList() {
+    renderExperienceList(listEl, store.getData(), { expanded: ui.expanded, onAdd: openQuick });
+  }
+
+  /* ---------- クイック入力 ---------- */
+
+  function isNarrow() {
+    try {
+      return Boolean(win.matchMedia && win.matchMedia("(max-width: 760px)").matches);
+    } catch {
+      return false;
+    }
+  }
+
+  function openQuick() {
+    quick.refreshDate();
+    sheet.classList.add("is-open");
+    doc.body.classList.add("sheet-open");
+    removeNotice("draft");
+    quick.focus();
+  }
+
+  function hideSheet() {
+    sheet.classList.remove("is-open");
+    doc.body.classList.remove("sheet-open");
+  }
+
+  /** 記録せずに閉じる（書きかけは残す） */
+  function closeQuick() {
+    saveDraft();
+    hideSheet();
+  }
+
+  function submitQuick(values) {
+    if (persistence.blocked()) {
+      return { ok: false, errors: [{ field: null, message: "保存を止めているあいだは記録できません（お知らせを見てください）。" }] };
+    }
+    const r = quickAddExperience(values, { id: env.newId("exp"), now: env.now() });
+    if (!r.ok) return r;
+    const before = store.getData();
+    const wasDirty = autosaver.isDirty();
+    try {
+      store.dispatch(r.action);
+    } catch (e) {
+      return { ok: false, errors: [{ field: null, message: `記録できませんでした（${e && e.message}）` }] };
+    }
+    const saved = autosaver.flush();
+    if (!saved || !saved.ok) {
+      // 保存できなかった記録は取り消し、入力を欄に残す（画面の中にしか無い記録を作らない）
+      store.dispatch({ type: "data/replace", data: before, reason: "rollback" });
+      if (!wasDirty) autosaver.markClean();
+      renderHeader();
+      return {
+        ok: false,
+        errors: [{ field: null, message: `記録できませんでした（${saved ? saved.message : "保存の結果が分かりません"}）。入力はそのまま残しています。` }],
+      };
+    }
+    // 記録できたので、このタブの書きかけを消す（入力欄はこのあと quick-input が空にする）
+    win.clearTimeout(draftTimer);
+    draftTimer = null;
+    discardOwnDraft();
+    hideSheet();
+    if (!isNarrow()) quick.focus();
+    toast("記録しました（未整理に入れました）");
+    return { ok: true };
+  }
+
+  /* ---------- Export・ダウンロード ---------- */
+
+  function recordExport(at) {
+    persistence.writePrefs({ lastExportAt: at });
+    ui.prefs = persistence.readPrefs();
+    renderHeader();
+    refreshPanel();
+  }
+
+  function doExport() {
+    const at = env.now();
+    let text;
+    try {
+      text = exportText(store.getData(), { now: at });
+    } catch (e) {
+      addNotice({ key: "export", level: "error", text: `JSON Export できませんでした（${e && e.message}）`, dismissible: true });
+      return;
+    }
+    // 共有シートは操作の直後にしか開けないので、await より前に呼ぶ
+    deliverTextFile({ text, fileName: exportFileName(env.localParts(), build.channel) }, win).then((r) => {
+      if (r.ok && !r.uncertain) {
+        removeNotice("export");
+        recordExport(at);
+        toast("JSON Export しました");
+      } else if (r.ok) {
+        addNotice({
+          key: "export",
+          level: "warn",
+          text: "共有の画面を開けなかったので、ダウンロードに切り替えました。ファイルが保存されたかを確かめてください（確かめるまで「最終Export」は更新しません）。",
+          actions: [
+            {
+              label: "保存できた",
+              primary: true,
+              run: () => {
+                removeNotice("export");
+                recordExport(at);
+              },
+            },
+          ],
+          dismissible: true,
+        });
+      } else if (!r.cancelled) {
+        addNotice({ key: "export", level: "error", text: `JSON Export できませんでした（${r.message}）`, dismissible: true });
+      }
+    });
+  }
+
+  function downloadRaw(raw, label) {
+    const fileName = rawFileName(raw, label, env.localParts(), build.channel);
+    const mime = fileName.endsWith(".json") ? "application/json" : "text/plain";
+    deliverTextFile({ text: raw, fileName, mime }, win).then((r) => {
+      if (!r.ok && !r.cancelled) addNotice({ key: "download", level: "error", text: `書き出せませんでした（${r.message}）`, dismissible: true });
+    });
+  }
+
+  /* ---------- データ画面 ---------- */
+
+  function protectionText() {
+    const p = ui.protection;
+    if (p === null) return "確かめています…";
+    const backup = "端末の故障や、ブラウザのデータ削除に備えて、定期的に JSON Export してください。";
+    const ios = win.navigator && typeof win.navigator.standalone === "boolean";
+    const icon = ios ? "iPhone では、ホーム画面のアイコンを削除すると、そのアプリに保存したデータも消えることがあります。" : "";
+    if (p.persisted) return `ブラウザに、保存データを消さないよう求めて、許可されています。${icon}${backup}`;
+    if (!p.supported) return `このブラウザは、保存データを消さないよう求める仕組みに対応していません。${icon}${backup}`;
+    if (isStandalone(win)) return `ブラウザに、保存データを消さないよう求めましたが、許可されていません。${icon}${backup}`;
+    return `ブラウザに、保存データを消さないよう求めましたが、許可されていません。iPhone では、ホーム画面に追加して開くと許可されやすくなります。${icon}${backup}`;
+  }
+
+  function panelView() {
+    const age = currentExportAge();
+    const list = persistence.listQuarantine();
+    return {
+      exportAgeText: ui.prefs.lastExportAt ? `${age.text}（${localDateTimeText(ui.prefs.lastExportAt)}）` : age.text,
+      exportWarn: age.warn,
+      quarantine: list.map((e) => ({
+        at: e.at,
+        atText: localDateTimeText(e.at),
+        reasonLabel: REASON_LABELS[e.reason] || e.reason || "理由不明",
+        message: e.message,
+        size: e.raw.length,
+      })),
+      protection: protectionText(),
+      versionLines: [
+        `${CHANNEL_LABELS[build.channel]}（データはこのブラウザの中に保存。普段使い用と開発用は別々）`,
+        `ビルド：${build.commit}${build.builtAt ? `（${localDateTimeText(build.builtAt)}）` : ""}`,
+        `データバージョン：${SCHEMA_VERSION}`,
+      ],
+      onExport: doExport,
+      onDownloadQuarantine: (i) => {
+        const e = list[i];
+        if (e) downloadRaw(e.raw, `backup-${e.reason || "unknown"}`);
+      },
+      onDeleteQuarantine: (i) => {
+        const e = list[i];
+        if (!e) return;
+        let ok = false;
+        try {
+          ok = win.confirm("この退避データを削除します。元に戻せません。先にダウンロードして保管しましたか？");
+        } catch {
+          ok = false;
+        }
+        if (!ok) return;
+        const r = persistence.deleteQuarantine(e.raw);
+        if (!r.ok) addNotice({ key: "download", level: "error", text: r.message, dismissible: true });
+        if (persistence.listQuarantine().length === 0) removeNotice("quarantine");
+        refreshPanel();
+      },
+    };
+  }
+
+  function openPanel() {
+    if (ui.panel) return;
+    ui.panel = openDataPanel(root, panelView(), {
+      onClose: () => {
+        ui.panel = null;
+      },
+    });
+  }
+
+  function refreshPanel() {
+    if (ui.panel) ui.panel.refresh(panelView());
+  }
+
+  /* ---------- 読み込みの結果のお知らせ ---------- */
+
+  function continueWithoutBackup() {
+    persistence.releaseWithoutBackup();
+    removeNotice("backup");
+    ui.save = { status: "pending", message: "", at: null };
+    autosaver.schedule();
+    autosaver.flush();
+    addNotice({
+      key: "backupSkipped",
+      level: "warn",
+      text: "元のデータを退避せずに続けました。元のデータは、さきほどダウンロードしたファイルにしか残っていません。そのファイルを保管してください。",
+      dismissible: true,
+    });
+    renderHeader();
+    renderBlocked();
+  }
+
+  function showLoadNotices(r) {
+    const c = countByLevel(r.report);
+    const items = r.report.items.filter((i) => i.level !== "info");
+    const backedUp = r.backup && r.backup.ok;
+    if (r.migratedSteps.length > 0) {
+      addNotice({
+        level: "info",
+        text: `データバージョン${r.fromVersion}から${SCHEMA_VERSION}へ移行しました。${backedUp ? "移行する前のデータは退避してあります。" : ""}`,
+        dismissible: true,
+      });
+    }
+    if (c.drop > 0) {
+      addNotice({
+        level: "warn",
+        text: `保存データを読み込むときに、${c.drop}件の値を捨てて直しました。${backedUp ? "元のデータは退避してあります。" : ""}`,
+        details: items,
+        dismissible: true,
+      });
+    } else if (c.fix > 0) {
+      addNotice({ level: "info", text: `保存データを読み込むときに、${c.fix}件の形を整えました（情報は失っていません）。`, details: items, dismissible: true });
+    }
+    if (r.backup && !r.backup.ok) {
+      addNotice({
+        key: "backup",
+        level: "error",
+        text: `元のデータを退避できなかったので、保存を止めています（${r.backup.message}）。元のデータをダウンロードして保管してから続けるか、「データ」で古い退避データをダウンロードしてから削除し、再読み込みしてください（空きができれば退避できます）。`,
+        actions: [
+          { label: "元のデータをダウンロード", primary: true, run: () => downloadRaw(persistence.pendingRaw() || "", "original") },
+          { label: "ダウンロードしたので続ける", run: continueWithoutBackup },
+          { label: "データを開く", run: openPanel },
+          { label: "再読み込み", run: () => win.location.reload() },
+        ],
+      });
+    }
+  }
+
+  /* ---------- 起動 ---------- */
+
+  let saveAtStart = saveNow;
+  if (load && load.kind === "ok") {
+    showLoadNotices(load);
+    // 読み込みで直した・移行したデータは、すぐに保存し直す（元のデータの退避が済んでいるときだけ）。
+    // 保存しないと、開くたびに同じ直しと退避を繰り返すため
+    if (load.report.items.length > 0 && !persistence.blocked()) saveAtStart = true;
+  }
+  if (load && load.kind === "unavailable") addNotice({ key: "save", level: "error", text: load.message });
+  for (const n of notices) addNotice(n);
+
+  const quarantineList = persistence.listQuarantine();
+  if (quarantineList.length > 0) {
+    const newest = quarantineList.map((e) => e.at).filter((a) => a !== "").sort().pop() || "";
+    const seen = ui.prefs.quarantineSeenAt;
+    if (!seen || (newest !== "" && newest > seen)) {
+      addNotice({
+        key: "quarantine",
+        level: "info",
+        text: `退避データが${quarantineList.length}件あります。「データ」から中身をダウンロードできます。`,
+        actions: [{ label: "データを開く", run: openPanel }],
+        dismissible: true,
+        onDismiss: () => {
+          persistence.writePrefs({ quarantineSeenAt: env.now() });
+          ui.prefs = persistence.readPrefs();
+        },
+      });
+    }
+  }
+
+  // iPhone の Safari のタブで開いているとき（ホーム画面のアプリではないとき）
+  if (win.navigator && win.navigator.standalone === false && !ui.prefs.homeTipClosedAt) {
+    addNotice({
+      key: "homeTip",
+      level: "info",
+      text: "iPhone では、共有ボタンの「ホーム画面に追加」から開いたアプリで使ってください。Safari のタブとホーム画面のアプリでは保存場所が別になり、Safari のタブのデータは、7日間開かないと消えることがあります。",
+      dismissible: true,
+      onDismiss: () => {
+        persistence.writePrefs({ homeTipClosedAt: env.now() });
+        ui.prefs = persistence.readPrefs();
+      },
+    });
+  }
+
+  // 書きかけを戻す（戻したものは、このタブの書きかけとして引き継ぐ）
+  const draft = persistence.readDraft();
+  if (draft) {
+    quick.setValues(draft);
+    if (quick.hasInput()) {
+      writeOwnDraft();
+      if (isNarrow()) {
+        addNotice({
+          key: "draft",
+          level: "info",
+          text: "書きかけの記録があります。",
+          actions: [{ label: "続きを書く", primary: true, run: openQuick }],
+          dismissible: true,
+        });
+      } else {
+        toast("書きかけの記録を戻しました");
+      }
+    }
+  }
+
+  win.addEventListener("error", (ev) => {
+    addNotice({
+      key: "uncaught",
+      level: "error",
+      text: `画面で問題が起きました（${ev && ev.message ? ev.message : "不明"}）。保存の状態は右上で確かめてください。続くときは、JSON Export してから再読み込みしてください。`,
+      dismissible: true,
+    });
+  });
+  win.addEventListener("unhandledrejection", (ev) => {
+    const reason = ev && ev.reason;
+    addNotice({
+      key: "uncaught",
+      level: "error",
+      text: `画面で問題が起きました（${reason && reason.message ? reason.message : String(reason)}）。続くときは、JSON Export してから再読み込みしてください。`,
+      dismissible: true,
+    });
+  });
+
+  requestPersistence(win.navigator).then((p) => {
+    ui.protection = p;
+    refreshPanel();
+  });
+
+  renderHeader();
+  renderList();
+  renderBlocked();
+  if (saveAtStart) {
+    ui.save = { status: "pending", message: "", at: null };
+    autosaver.schedule();
+    autosaver.flush();
+  }
+
+  return { store, autosaver };
+}
+__export(__exports, { "startApp": () => startApp });
+});
+__define("ui/build-info.js", function (__exports, __require) {
+"use strict";
+/*
+ * ビルドの情報（build.js が globalThis.CAREER_GRAPH_BUILD に入れる）
+ *   channel  "main"（普段使い）か "dev"（開発中）。保存キーと表示を分ける
+ *   commit   ビルドしたコミット
+ *   builtAt  ビルドした日時
+ * ビルドせずに読み込んだときは、開発用として扱う（普段使いのデータに触れないため）。
+ */
+
+const raw = globalThis.CAREER_GRAPH_BUILD;
+
+const BUILD_INFO = Object.freeze({
+  channel: raw && raw.channel === "main" ? "main" : "dev",
+  commit: raw && typeof raw.commit === "string" ? raw.commit : "unknown",
+  builtAt: raw && typeof raw.builtAt === "string" ? raw.builtAt : "",
+});
+
+/** 版の表示名 */
+const CHANNEL_LABELS = Object.freeze({ main: "普段使い用", dev: "開発用" });
+__export(__exports, { "BUILD_INFO": () => BUILD_INFO, "CHANNEL_LABELS": () => CHANNEL_LABELS });
+});
+__define("ui/dom.js", function (__exports, __require) {
+"use strict";
+/*
+ * DOM を作る小道具（画面側だけで使う）
+ *
+ * 文字は必ずテキストとして入れる（innerHTML は使わない）。データや AI の回答に < や & が入っていても、
+ * タグとして読まれないことを仕組みで守るため。
+ */
+
+function appendChildren(el, children) {
+  for (const c of children.flat(Infinity)) {
+    if (c === null || c === undefined || c === false || c === true) continue;
+    el.append(c instanceof Node ? c : String(c));
+  }
+}
+
+/**
+ * 要素を作る。
+ *   h("button", { class: "btn", type: "button", onclick: fn }, "保存")
+ * props:
+ *   class    文字列か配列（偽の値は除く）
+ *   dataset  data-* 属性
+ *   onxxx    イベント（onclick → click）
+ *   value / checked / disabled / hidden  プロパティとして入れる
+ *   それ以外 属性（true は空の属性、false・null・undefined は付けない）
+ */
+function h(tag, props, ...children) {
+  const el = document.createElement(tag);
+  if (props) {
+    for (const [k, v] of Object.entries(props)) {
+      if (v === undefined || v === null || v === false) continue;
+      if (k === "class") el.className = Array.isArray(v) ? v.filter(Boolean).join(" ") : String(v);
+      else if (k === "dataset") for (const [dk, dv] of Object.entries(v)) el.dataset[dk] = String(dv);
+      else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+      else if (k === "value") el.value = String(v);
+      else if (k === "checked" || k === "disabled" || k === "hidden") el[k] = Boolean(v);
+      else el.setAttribute(k, v === true ? "" : String(v));
+    }
+  }
+  appendChildren(el, children);
+  return el;
+}
+
+/** 子要素を入れ替える */
+function setChildren(el, ...children) {
+  el.replaceChildren();
+  appendChildren(el, children);
+}
+__export(__exports, { "h": () => h, "setChildren": () => setChildren });
+});
+__define("ui/env.js", function (__exports, __require) {
+"use strict";
+/*
+ * ブラウザの環境（時計・ID・保存領域・ローカル日付）をまとめる。
+ * core と store は「今」や ID を自分で作らないので、ここで作って渡す。
+ */
+
+const { cryptoRandom, idFactory } = __require("core/ids.js");
+
+/** 保存領域。読むだけで例外になる環境（保存を禁止したブラウザなど）では、使うたびに例外を投げる偽物を返す */
+function localStorageOf(win) {
+  try {
+    const s = win.localStorage;
+    if (s) return s;
+    throw new Error("localStorage がありません");
+  } catch (e) {
+    return {
+      getItem() {
+        throw e;
+      },
+      setItem() {
+        throw e;
+      },
+    };
+  }
+}
+
+/** Date → ローカルの年月日・時分 */
+function localParts(date) {
+  return {
+    y: date.getFullYear(),
+    m: date.getMonth() + 1,
+    d: date.getDate(),
+    hh: date.getHours(),
+    mm: date.getMinutes(),
+  };
+}
+
+/** 日時（toISOString の形）→ ローカルの年月日。読めなければ null */
+function localDayOf(iso) {
+  if (typeof iso !== "string" || iso === "") return null;
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return null;
+  const p = localParts(new Date(t));
+  return { y: p.y, m: p.m, d: p.d };
+}
+
+/** 日時（toISOString の形）→ "YYYY/MM/DD HH:MM"（ローカル）。読めなければ "" */
+function localDateTimeText(iso) {
+  if (typeof iso !== "string" || iso === "") return "";
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  const p = localParts(new Date(t));
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${p.y}/${pad(p.m)}/${pad(p.d)} ${pad(p.hh)}:${pad(p.mm)}`;
+}
+
+/** 日時 → "HH:MM"（ローカル） */
+function localTimeText(iso) {
+  const s = localDateTimeText(iso);
+  return s === "" ? "" : s.slice(11);
+}
+
+function createBrowserEnv(win) {
+  const random = cryptoRandom();
+  return {
+    now: () => new Date().toISOString(),
+    newId: idFactory(() => Date.now(), random),
+    localParts: () => localParts(new Date()),
+    today() {
+      const p = localParts(new Date());
+      return { y: p.y, m: p.m, d: p.d };
+    },
+    storage: localStorageOf(win),
+  };
+}
+
+/**
+ * 保存データを消さないよう、ブラウザに求める（navigator.storage.persist）。
+ * Safari は、ホーム画面に追加したアプリかどうかなどで許可を決める。
+ * @returns {Promise<{supported:boolean, persisted:boolean}>}
+ */
+async function requestPersistence(nav) {
+  const s = nav && nav.storage;
+  if (!s || typeof s.persisted !== "function") return { supported: false, persisted: false };
+  try {
+    if (await s.persisted()) return { supported: true, persisted: true };
+    if (typeof s.persist !== "function") return { supported: true, persisted: false };
+    return { supported: true, persisted: Boolean(await s.persist()) };
+  } catch {
+    return { supported: true, persisted: false };
+  }
+}
+
+/** ホーム画面に追加したアプリとして開いているか */
+function isStandalone(win) {
+  try {
+    if (win.navigator && win.navigator.standalone === true) return true;
+    return Boolean(win.matchMedia && win.matchMedia("(display-mode: standalone)").matches);
+  } catch {
+    return false;
+  }
+}
+__export(__exports, { "localParts": () => localParts, "localDayOf": () => localDayOf, "localDateTimeText": () => localDateTimeText, "localTimeText": () => localTimeText, "createBrowserEnv": () => createBrowserEnv, "requestPersistence": () => requestPersistence, "isStandalone": () => isStandalone });
+});
+__define("ui/files.js", function (__exports, __require) {
+"use strict";
+/*
+ * 文字のファイルを端末に渡す（JSON Export・退避データのダウンロード）
+ *
+ * 指で操作する端末（スマホ）で共有シートが使えるなら、共有シートを開く。
+ * iPhone のホーム画面に追加したアプリでは、ダウンロードが不安定だと報告されているため。
+ * 共有シートの「"ファイル"に保存」で保存できる。それ以外はダウンロードする。
+ * クリックの処理の中から、await より前に呼ぶこと（共有シートは、利用者の操作の直後しか開けない）。
+ */
+
+/**
+ * 戻り値の uncertain が true なら、ダウンロードの処理はしたが、保存できたかどうかが分からない
+ * （指で操作する端末で、共有シートを使えずにダウンロードへ切り替えたとき）。
+ * @param {{text:string, fileName:string, mime?:string}} file
+ * @param {Window} win
+ * @returns {Promise<{ok:true, how:"share"|"download", uncertain:boolean} | {ok:false, cancelled?:boolean, message?:string}>}
+ */
+async function deliverTextFile({ text, fileName, mime = "application/json" }, win) {
+  const nav = win.navigator;
+  let coarse = false;
+  try {
+    coarse = Boolean(win.matchMedia && win.matchMedia("(pointer: coarse)").matches);
+  } catch {
+    coarse = false;
+  }
+  if (coarse && nav && typeof nav.share === "function" && typeof nav.canShare === "function" && typeof win.File === "function") {
+    let file = null;
+    try {
+      file = new win.File([text], fileName, { type: mime });
+    } catch {
+      file = null;
+    }
+    let can = false;
+    try {
+      can = Boolean(file && nav.canShare({ files: [file] }));
+    } catch {
+      can = false;
+    }
+    if (can) {
+      try {
+        await nav.share({ files: [file] });
+        return { ok: true, how: "share", uncertain: false };
+      } catch (e) {
+        if (e && e.name === "AbortError") return { ok: false, cancelled: true };
+        // 共有できなければ、ダウンロードに切り替える
+      }
+    }
+  }
+  try {
+    const blob = new win.Blob([text], { type: mime });
+    const url = win.URL.createObjectURL(blob);
+    const a = win.document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.rel = "noopener";
+    a.hidden = true;
+    win.document.body.append(a);
+    a.click();
+    a.remove();
+    win.setTimeout(() => win.URL.revokeObjectURL(url), 60_000);
+    return { ok: true, how: "download", uncertain: coarse };
+  } catch (e) {
+    return { ok: false, message: String(e && e.message ? e.message : e) };
+  }
+}
+__export(__exports, { "deliverTextFile": () => deliverTextFile });
+});
+__define("ui/main.js", function (__exports, __require) {
+"use strict";
+/*
+ * 入口: 保存データを読み、読めればアプリの画面を、読めなければ選んでもらう画面を出す
+ */
+
+const { createLocalPersistence } = __require("persist/local.js");
+const { startApp } = __require("ui/app.js");
+const { BUILD_INFO } = __require("ui/build-info.js");
+const { h, setChildren } = __require("ui/dom.js");
+const { createBrowserEnv } = __require("ui/env.js");
+const { renderRecovery } = __require("ui/recovery.js");
+
+function boot(win) {
+  const root = win.document.getElementById("app");
+  const env = createBrowserEnv(win);
+  const persistence = createLocalPersistence({
+    storage: env.storage,
+    channel: BUILD_INFO.channel,
+    now: env.now,
+    newId: env.newId,
+  });
+  const common = { env, persistence, build: BUILD_INFO, win };
+  const load = persistence.load();
+  if (load.kind === "error") {
+    renderRecovery(root, {
+      ...common,
+      result: load,
+      onContinue: ({ data, mode, backedUp }) => {
+        const how = mode === "repaired" ? "直した内容で始めました。" : "空の状態で始めました。";
+        startApp(root, {
+          ...common,
+          data,
+          saveNow: true,
+          notices: [
+            backedUp
+              ? {
+                  level: "info",
+                  text: `読み込めなかった元のデータを退避して、${how}元のデータは「データ」からダウンロードできます。`,
+                  dismissible: true,
+                }
+              : {
+                  level: "warn",
+                  text: `元のデータを退避せずに、${how}元のデータは、さきほどダウンロードしたファイルにしか残っていません。そのファイルを保管してください。`,
+                  dismissible: true,
+                },
+          ],
+        });
+      },
+    });
+    return;
+  }
+  startApp(root, { ...common, data: load.data, load });
+}
+
+try {
+  boot(window);
+} catch (e) {
+  // ここに来るのはアプリの不具合。保存データは上書きしていない
+  const root = document.getElementById("app");
+  if (root) {
+    setChildren(
+      root,
+      h(
+        "main",
+        { class: "recovery" },
+        h("h1", null, "画面を準備できませんでした"),
+        h("p", null, `問題: ${e && e.message ? e.message : String(e)}`),
+        h("p", null, "保存データは上書きしていません。再読み込みしても直らないときは、この画面の内容を控えて知らせてください。"),
+      ),
+    );
+  }
+  throw e;
+}
+__export(__exports, {  });
+});
+__define("ui/recovery.js", function (__exports, __require) {
+"use strict";
+/*
+ * 保存データを読み込めなかったときの画面
+ *
+ * 保存データは上書きせずに残し、利用者に次を選んでもらう（設計書 3章「変えるもの」）。
+ *   元のデータをダウンロード   いつでも選べる
+ *   直した内容で続ける         読み込めなかった箇所を直した内容があるとき（元のデータは退避してから）
+ *   空で始める                 元のデータは退避してから
+ * 新しい版のアプリのデータだったときは、続けずに再読み込みをすすめる（古い画面で上書きしないため）。
+ * 元のデータを退避できなかったときは、ダウンロードしてから「退避せずに続ける」を選べるようにする。
+ * JSON からの復元は Phase 3（Import）で足す。
+ */
+
+const { countByLevel, emptyData } = __require("core/normalize.js");
+const { rawFileName } = __require("persist/export.js");
+const { REASON_LABELS } = __require("persist/local.js");
+const { h, setChildren } = __require("ui/dom.js");
+const { localDateTimeText } = __require("ui/env.js");
+const { deliverTextFile } = __require("ui/files.js");
+const { reportDetails } = __require("ui/views/report.js");
+
+/**
+ * @param {HTMLElement} root
+ * @param {{
+ *   result: {raw:string, error:{code:string, message:string}, data:object|null, report:object|null},
+ *   env: object, persistence: object, build: {channel:string}, win: Window,
+ *   onContinue: (choice:{data:object, mode:"repaired"|"empty", backedUp:boolean}) => void,
+ * }} opts
+ */
+function renderRecovery(root, { result, env, persistence, build, win, onContinue }) {
+  const newer = result.error.code === "newerVersion";
+  const status = h("p", { class: "recovery-status", role: "status", hidden: true });
+  let pendingChoice = null;
+  const forceButton = h(
+    "button",
+    {
+      type: "button",
+      class: "btn",
+      hidden: true,
+      onclick: () => {
+        persistence.releaseWithoutBackup();
+        if (pendingChoice) finish(pendingChoice, false);
+      },
+    },
+    "ダウンロードしたので、退避せずに続ける",
+  );
+
+  function show(message) {
+    status.hidden = false;
+    status.textContent = message;
+  }
+
+  // 退避できなかったとき、いまある退避データを見せて、ダウンロードしてから削除して空きを作れるようにする
+  const quarantineBox = h("div", { class: "recovery-quarantine", hidden: true });
+  function renderQuarantine() {
+    const list = persistence.listQuarantine();
+    quarantineBox.hidden = list.length === 0;
+    setChildren(
+      quarantineBox,
+      h("p", null, "保存領域を空けるには、いまある退避データをダウンロードしてから削除し、もう一度選んでください。"),
+      h(
+        "ul",
+        { class: "quarantine-list" },
+        list.map((e) =>
+          h(
+            "li",
+            null,
+            h(
+              "div",
+              { class: "q-main" },
+              h("span", { class: "q-reason" }, REASON_LABELS[e.reason] || e.reason || "理由不明"),
+              h("span", { class: "q-meta" }, `${localDateTimeText(e.at) || "日時不明"}・${e.raw.length.toLocaleString("ja-JP")}文字`),
+            ),
+            h(
+              "div",
+              { class: "q-actions" },
+              h(
+                "button",
+                {
+                  type: "button",
+                  class: "btn btn-small",
+                  onclick: () => {
+                    const name = rawFileName(e.raw, `backup-${e.reason || "unknown"}`, env.localParts(), build.channel);
+                    deliverTextFile({ text: e.raw, fileName: name, mime: name.endsWith(".json") ? "application/json" : "text/plain" }, win);
+                  },
+                },
+                "ダウンロード",
+              ),
+              h(
+                "button",
+                {
+                  type: "button",
+                  class: "btn btn-small btn-danger",
+                  onclick: () => {
+                    let ok = false;
+                    try {
+                      ok = win.confirm("この退避データを削除します。元に戻せません。先にダウンロードして保管しましたか？");
+                    } catch {
+                      ok = false;
+                    }
+                    if (!ok) return;
+                    const r = persistence.deleteQuarantine(e.raw);
+                    if (!r.ok) show(r.message);
+                    renderQuarantine();
+                  },
+                },
+                "削除",
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  async function download() {
+    const fileName = rawFileName(result.raw, "unreadable", env.localParts(), build.channel);
+    const r = await deliverTextFile({ text: result.raw, fileName, mime: "text/plain" }, win);
+    if (r.ok) show("元のデータを書き出しました。");
+    else if (!r.cancelled) show(`書き出せませんでした（${r.message}）`);
+  }
+
+  function finish(choice, backedUp) {
+    const data = choice === "repaired" ? result.data : emptyData(env.now());
+    onContinue({ data, mode: choice, backedUp });
+  }
+
+  function choose(choice) {
+    const q = persistence.releaseWithBackup();
+    if (q.ok) {
+      finish(choice, true);
+      return;
+    }
+    pendingChoice = choice;
+    forceButton.hidden = false;
+    show(`元のデータを退避できませんでした（${q.message}）。先に「元のデータをダウンロード」で保管してから、下のボタンで続けてください。`);
+    renderQuarantine();
+  }
+
+  const counts = result.report ? countByLevel(result.report) : null;
+  const actions = [h("button", { type: "button", class: "btn", onclick: download }, "元のデータをダウンロード")];
+  if (newer) {
+    actions.unshift(h("button", { type: "button", class: "btn btn-primary", onclick: () => win.location.reload() }, "再読み込み"));
+  } else {
+    if (result.data) {
+      actions.unshift(h("button", { type: "button", class: "btn btn-primary", onclick: () => choose("repaired") }, "直した内容で続ける"));
+    }
+    actions.push(h("button", { type: "button", class: "btn btn-danger", onclick: () => choose("empty") }, "空で始める"));
+  }
+
+  setChildren(
+    root,
+    h(
+      "main",
+      { class: "recovery" },
+      h("h1", null, "保存データを読み込めませんでした"),
+      h("p", { class: "recovery-lead" }, result.error.message),
+      h("p", null, "保存データは上書きせずに、そのまま残しています。"),
+      newer
+        ? h("p", null, "このアプリより新しい版で保存されたデータです。再読み込みして、新しい版で開いてください。")
+        : h(
+            "ul",
+            { class: "plain-list recovery-help" },
+            result.data
+              ? h("li", null, "直した内容で続ける：読み込めなかった箇所を直した内容で使います（直した箇所は下の「詳しく」）。元のデータは退避用の保存場所に残します。")
+              : null,
+            h("li", null, "空で始める：何も入っていない状態から始めます。元のデータは退避用の保存場所に残します。"),
+            h("li", null, "選ぶ前に、元のデータをダウンロードして保管しておけます。"),
+          ),
+      h("div", { class: "recovery-actions" }, actions),
+      status,
+      forceButton,
+      quarantineBox,
+      result.report && result.report.items.length > 0
+        ? h(
+            "div",
+            { class: "recovery-report" },
+            h("p", { class: "muted" }, `問題 ${counts.error}件・捨てた値 ${counts.drop}件・直した値 ${counts.fix}件`),
+            reportDetails(result.report.items),
+          )
+        : null,
+    ),
+  );
+}
+__export(__exports, { "renderRecovery": () => renderRecovery });
+});
+__define("ui/views/data-panel.js", function (__exports, __require) {
+"use strict";
+/*
+ * データ画面（重ねて開く）: JSON Export、退避データ、保存の保護、この版の情報
+ * 設定・データ画面の全体（入社年月・選択肢・Import など）は Phase 3 で作る。
+ */
+
+const { h, setChildren } = __require("ui/dom.js");
+
+/**
+ * @param {{
+ *   exportAgeText: string, exportWarn: boolean,
+ *   quarantine: {at:string, atText:string, reasonLabel:string, message:string, size:number}[],
+ *   protection: string,
+ *   versionLines: string[],
+ *   onExport: () => void,
+ *   onDownloadQuarantine: (index:number) => void,
+ *   onDeleteQuarantine: (index:number) => void,
+ * }} view
+ */
+function panelContent(view, close) {
+  return [
+    h(
+      "div",
+      { class: "panel-head" },
+      h("h2", { id: "data-panel-title" }, "データ"),
+      h("button", { type: "button", class: "btn btn-ghost", onclick: close }, "閉じる"),
+    ),
+    h(
+      "section",
+      { class: "panel-section" },
+      h("h3", null, "バックアップ（JSON Export）"),
+      h("p", { class: ["export-age", view.exportWarn && "is-warn"] }, view.exportAgeText),
+      h("p", { class: "muted" }, "今の内容を、保存データと同じ形のファイルに書き出します。iPhone では共有の画面で「“ファイル”に保存」を選んでください。"),
+      h("button", { type: "button", class: "btn btn-primary", onclick: view.onExport }, "JSON Export"),
+    ),
+    h(
+      "section",
+      { class: "panel-section" },
+      h("h3", null, "退避データ"),
+      view.quarantine.length === 0
+        ? h("p", { class: "muted" }, "ありません。")
+        : h(
+            "ul",
+            { class: "quarantine-list" },
+            view.quarantine.map((q, i) =>
+              h(
+                "li",
+                null,
+                h(
+                  "div",
+                  { class: "q-main" },
+                  h("span", { class: "q-reason" }, q.reasonLabel),
+                  h("span", { class: "q-meta" }, `${q.atText || "日時不明"}・${q.size.toLocaleString("ja-JP")}文字`),
+                  q.message !== "" ? h("span", { class: "q-message" }, q.message) : null,
+                ),
+                h(
+                  "div",
+                  { class: "q-actions" },
+                  h("button", { type: "button", class: "btn btn-small", onclick: () => view.onDownloadQuarantine(i) }, "ダウンロード"),
+                  h("button", { type: "button", class: "btn btn-small btn-danger", onclick: () => view.onDeleteQuarantine(i) }, "削除"),
+                ),
+              ),
+            ),
+          ),
+      h(
+        "p",
+        { class: "muted" },
+        "読み込めなかったデータや、上書きを止めたときの入力を、ここに残しています。復元は今後の版で対応します。元のデータの写しは自動では消さないので、保存領域がいっぱいになったら、ダウンロードしてから削除してください。",
+      ),
+    ),
+    h("section", { class: "panel-section" }, h("h3", null, "保存の保護"), h("p", null, view.protection)),
+    h(
+      "section",
+      { class: "panel-section" },
+      h("h3", null, "この版"),
+      h("ul", { class: "plain-list" }, view.versionLines.map((l) => h("li", null, l))),
+    ),
+  ];
+}
+
+/**
+ * データ画面を開く。戻り値の refresh(view) で中身を描き直し、close() で閉じる。
+ * @param {HTMLElement} host
+ * @param {object} view  panelContent の view
+ * @param {{onClose?: () => void}} [opts]
+ */
+function openDataPanel(host, view, { onClose = () => {} } = {}) {
+  const before = document.activeElement;
+  const panel = h("div", { class: "panel", role: "dialog", "aria-modal": "true", "aria-labelledby": "data-panel-title" });
+  const overlay = h(
+    "div",
+    {
+      class: "overlay",
+      onclick: (ev) => {
+        if (ev.target === overlay) close();
+      },
+    },
+    panel,
+  );
+  function onKey(ev) {
+    if (ev.key === "Escape") close();
+  }
+  function close() {
+    document.removeEventListener("keydown", onKey);
+    overlay.remove();
+    if (before && typeof before.focus === "function") before.focus();
+    onClose();
+  }
+  function refresh(next) {
+    setChildren(panel, panelContent(next, close));
+  }
+  refresh(view);
+  host.append(overlay);
+  document.addEventListener("keydown", onKey);
+  const first = panel.querySelector("button");
+  if (first) first.focus();
+  return { refresh, close };
+}
+__export(__exports, { "openDataPanel": () => openDataPanel });
+});
+__define("ui/views/experience-list.js", function (__exports, __require) {
+"use strict";
+/*
+ * 経験の一覧（新しい順）
+ * 区切り1では見るだけ。編集・削除・検索は区切り2で足す。
+ * 走り書きは3行まで見せ、押すと全部を開く（開いているものは expanded に覚える）。
+ */
+
+const { experienceCounts, experiencesNewestFirst, firstLine, formatSpan } = __require("store/selectors.js");
+const { h, setChildren } = __require("ui/dom.js");
+
+/**
+ * @param {HTMLElement} container
+ * @param {object} data
+ * @param {{expanded:Set<string>, onAdd:()=>void}} opts
+ */
+function renderExperienceList(container, data, { expanded, onAdd }) {
+  const { total, inbox } = experienceCounts(data);
+  const items = experiencesNewestFirst(data);
+  const head = h(
+    "div",
+    { class: "list-head" },
+    h("h2", { class: "list-title" }, "経験"),
+    total > 0 ? h("span", { class: "list-count" }, inbox > 0 ? `${total}件（未整理 ${inbox}件）` : `${total}件`) : null,
+  );
+  if (items.length === 0) {
+    setChildren(
+      container,
+      head,
+      h(
+        "div",
+        { class: "empty" },
+        h("p", null, "まだ経験がありません。"),
+        h("p", { class: "muted" }, "最近あったことを1件、記録してみてください。タイトルか走り書きだけでも残せます。"),
+        h("button", { type: "button", class: "btn btn-primary only-narrow", onclick: onAdd }, "＋ 記録する"),
+      ),
+    );
+    return;
+  }
+  for (const id of [...expanded]) if (!items.some((e) => e.id === id)) expanded.delete(id);
+  setChildren(
+    container,
+    head,
+    h(
+      "ul",
+      { class: "exp-list" },
+      items.map((e) => {
+        const span = formatSpan(e);
+        const heading = e.title !== "" ? e.title : firstLine(e.memo) || "（タイトルなし）";
+        // タイトルが空で、走り書きが見出しの1行だけなら、走り書きを重ねて出さない
+        const showMemo = e.memo !== "" && (e.title !== "" || e.memo.trim() !== heading);
+        const open = showMemo && expanded.has(e.id);
+        const inner = [
+          h(
+            "span",
+            { class: "exp-meta" },
+            h("span", { class: ["exp-date", span === "" && "is-empty"] }, span === "" ? "日付不明" : span),
+            e.inbox ? h("span", { class: "badge badge-inbox" }, "未整理") : null,
+            e.categories.map((c) => h("span", { class: "chip chip-static" }, c)),
+          ),
+          h("span", { class: ["exp-title", e.title === "" && "is-untitled"] }, heading),
+          showMemo ? h("span", { class: "exp-memo" }, e.memo) : null,
+        ];
+        const body = showMemo
+          ? h(
+              "button",
+              {
+                type: "button",
+                class: "exp-body",
+                "aria-expanded": open ? "true" : "false",
+                onclick: (ev) => {
+                  const nowOpen = !expanded.has(e.id);
+                  if (nowOpen) expanded.add(e.id);
+                  else expanded.delete(e.id);
+                  ev.currentTarget.setAttribute("aria-expanded", nowOpen ? "true" : "false");
+                  ev.currentTarget.parentElement.classList.toggle("is-open", nowOpen);
+                },
+              },
+              inner,
+            )
+          : h("div", { class: "exp-body" }, inner);
+        return h("li", { class: ["exp-item", open && "is-open"], dataset: { id: e.id } }, body);
+      }),
+    ),
+  );
+}
+__export(__exports, { "renderExperienceList": () => renderExperienceList });
+});
+__define("ui/views/quick-input.js", function (__exports, __require) {
+"use strict";
+/*
+ * クイック入力（タイトル・日付・カテゴリ・走り書き）
+ *
+ * その場では数項目だけ残し、深掘りは後でまとめて行う（設計書 1章「入力は2段階」）。
+ * 記録した経験は「未整理」になる。
+ * PC では一覧の上に常に出し、スマホでは「＋ 記録する」から全画面で開く（切り替えは CSS）。
+ *
+ * - タイトル・日付の欄で Enter（スマホの「次へ」）を押すと、次の欄へ移る（記録はしない）。
+ *   記録は「記録する」ボタンか Ctrl+Enter（Mac は ⌘+Enter）
+ * - 日付の欄を触っていなければ、開くたび・記録する直前に今日の日付にする（開いたまま日付をまたいでも、前日にならない）
+ * - 入力が変わるたびに onChange を呼ぶ（書きかけを保存するため）
+ */
+
+const { ymdText } = __require("store/selectors.js");
+const { h, setChildren } = __require("ui/dom.js");
+
+/**
+ * @typedef {{title:string, date:string, dateTouched:boolean, categories:string[], memo:string}} QuickValues
+ * @param {{
+ *   categories: string[],
+ *   today: () => {y:number, m:number, d:number},
+ *   onSubmit: (values:{title:string, date:string, categories:string[], memo:string}) =>
+ *     {ok:true} | {ok:false, errors:{field:string|null, message:string}[]},
+ *   onClose: () => void,
+ *   onChange?: () => void,
+ * }} opts
+ */
+function createQuickInput({ categories, today, onSubmit, onClose, onChange = () => {} }) {
+  let list = [...categories];
+  let selected = new Set();
+  let dateTouched = false;
+
+  const title = h("input", {
+    id: "qi-title",
+    name: "title",
+    type: "text",
+    class: "input",
+    autocomplete: "off",
+    enterkeyhint: "next",
+    placeholder: "例：帳票出力の不具合を直した",
+  });
+  const date = h("input", {
+    id: "qi-date",
+    name: "date",
+    type: "text",
+    class: "input input-date",
+    autocomplete: "off",
+    spellcheck: "false",
+    enterkeyhint: "next",
+    value: ymdText(today()),
+    "aria-describedby": "qi-date-hint",
+  });
+  const todayButton = h(
+    "button",
+    {
+      type: "button",
+      class: "btn btn-small",
+      onclick: () => {
+        date.value = ymdText(today());
+        dateTouched = false;
+        onChange();
+      },
+    },
+    "今日",
+  );
+  const chips = h("div", { class: "chips", role: "group", "aria-label": "カテゴリ（複数選べます）" });
+  const memo = h("textarea", {
+    id: "qi-memo",
+    name: "memo",
+    class: "input",
+    rows: 3,
+    placeholder: "何をしたか・困ったこと・気づいたこと（あとで整理できます）",
+  });
+  const errorBox = h("p", { class: "form-error", role: "alert", hidden: true });
+  const blockedBox = h("p", { class: "form-blocked", hidden: true });
+  const draftBox = h("p", { class: "form-blocked", role: "status", hidden: true });
+  const submitButton = h("button", { type: "submit", class: "btn btn-primary" }, "記録する");
+
+  function renderChips() {
+    setChildren(
+      chips,
+      list.map((c) =>
+        h(
+          "button",
+          {
+            type: "button",
+            class: "chip chip-toggle",
+            "aria-pressed": selected.has(c) ? "true" : "false",
+            onclick: (ev) => {
+              if (selected.has(c)) selected.delete(c);
+              else selected.add(c);
+              ev.currentTarget.setAttribute("aria-pressed", selected.has(c) ? "true" : "false");
+              onChange();
+            },
+          },
+          c,
+        ),
+      ),
+    );
+  }
+
+  function showErrors(errors) {
+    for (const el of [title, date, memo]) el.removeAttribute("aria-invalid");
+    for (const e of errors) {
+      const el = e.field === "title" ? title : e.field === "date" ? date : null;
+      if (el) el.setAttribute("aria-invalid", "true");
+    }
+    errorBox.hidden = errors.length === 0;
+    errorBox.textContent = errors.map((e) => e.message).join(" ");
+  }
+
+  /** 日付の欄を触っていなければ、今日の日付にする */
+  function refreshDate() {
+    if (!dateTouched) date.value = ymdText(today());
+  }
+
+  function reset() {
+    title.value = "";
+    memo.value = "";
+    dateTouched = false;
+    date.value = ymdText(today());
+    selected = new Set();
+    renderChips();
+  }
+
+  function submit() {
+    if (submitButton.disabled) return;
+    refreshDate();
+    const r = onSubmit({ title: title.value, date: date.value, categories: [...selected], memo: memo.value });
+    if (!r.ok) {
+      showErrors(r.errors);
+      return;
+    }
+    showErrors([]);
+    reset();
+    onChange();
+  }
+
+  /** IME で変換中の Enter か（Safari は変換を確定する Enter で isComposing が false のことがあるので、keyCode 229 も見る） */
+  function composing(ev) {
+    return ev.isComposing || ev.keyCode === 229;
+  }
+
+  function onKeydown(ev) {
+    if (ev.key !== "Enter" || composing(ev)) return;
+    if (ev.ctrlKey || ev.metaKey) {
+      ev.preventDefault();
+      submit();
+      return;
+    }
+    // タイトル・日付の欄では、Enter（「次へ」）で次の欄へ。記録はしない
+    if (ev.currentTarget === title) {
+      ev.preventDefault();
+      date.focus();
+    } else if (ev.currentTarget === date) {
+      ev.preventDefault();
+      memo.focus();
+    }
+  }
+  title.addEventListener("keydown", onKeydown);
+  date.addEventListener("keydown", onKeydown);
+  memo.addEventListener("keydown", onKeydown);
+  title.addEventListener("input", () => onChange());
+  memo.addEventListener("input", () => onChange());
+  date.addEventListener("input", () => {
+    dateTouched = true;
+    onChange();
+  });
+
+  const form = h(
+    "form",
+    {
+      class: "quick-input",
+      novalidate: true,
+      "aria-labelledby": "qi-heading",
+      onsubmit: (ev) => {
+        ev.preventDefault();
+        submit();
+      },
+    },
+    h(
+      "div",
+      { class: "qi-head" },
+      h("h2", { id: "qi-heading", class: "qi-heading" }, "記録する"),
+      h("button", { type: "button", class: "btn btn-ghost qi-close", onclick: () => onClose() }, "閉じる"),
+    ),
+    h("div", { class: "field" }, h("label", { for: "qi-title" }, "タイトル"), title),
+    h(
+      "div",
+      { class: "field" },
+      h("label", { for: "qi-date" }, "日付"),
+      h("div", { class: "date-row" }, date, todayButton),
+      h("p", { id: "qi-date-hint", class: "hint" }, "年や年月だけでも入れられます（例：2024-06、2024）。空にすると日付不明"),
+    ),
+    h("div", { class: "field" }, h("span", { class: "label" }, "カテゴリ"), chips),
+    h("div", { class: "field" }, h("label", { for: "qi-memo" }, "走り書き"), memo),
+    errorBox,
+    blockedBox,
+    draftBox,
+    h("div", { class: "qi-actions" }, submitButton, h("span", { class: "hint only-wide" }, "Ctrl+Enter でも記録できます")),
+  );
+
+  renderChips();
+
+  return {
+    el: form,
+    /** カテゴリの選択肢を入れ替える（選んでいたもののうち、残るものは選んだまま） */
+    setCategories(next) {
+      list = [...next];
+      selected = new Set([...selected].filter((c) => list.includes(c)));
+      renderChips();
+    },
+    /** 保存を止めているあいだは記録できないようにする（理由を出す）。message が null なら戻す */
+    setBlocked(message) {
+      submitButton.disabled = message !== null;
+      blockedBox.hidden = message === null;
+      blockedBox.textContent = message === null ? "" : message;
+    },
+    /** @returns {QuickValues} 今の入力 */
+    getValues() {
+      return { title: title.value, date: date.value, dateTouched, categories: [...selected], memo: memo.value };
+    },
+    /** 書きかけを戻す（日付を触っていなかったなら、今日の日付にする） */
+    setValues(v) {
+      title.value = typeof v.title === "string" ? v.title : "";
+      memo.value = typeof v.memo === "string" ? v.memo : "";
+      dateTouched = v.dateTouched === true && typeof v.date === "string";
+      date.value = dateTouched ? v.date : ymdText(today());
+      const cats = Array.isArray(v.categories) ? v.categories.filter((c) => typeof c === "string") : [];
+      // 選択肢から外れたカテゴリも、書きかけでは選んだまま残す（黙って捨てない）
+      for (const c of cats) if (!list.includes(c)) list.push(c);
+      selected = new Set(cats);
+      renderChips();
+    },
+    /** 書きかけがあるか（タイトル・走り書き・カテゴリのどれかが入っている） */
+    hasInput() {
+      return title.value.trim() !== "" || memo.value.trim() !== "" || selected.size > 0;
+    },
+    /** 入力欄を空にする（別の画面で記録されたときなど） */
+    clear() {
+      showErrors([]);
+      reset();
+    },
+    /** 書きかけを保存できないことを知らせる。message が null なら消す */
+    setDraftWarning(message) {
+      draftBox.hidden = message === null;
+      draftBox.textContent = message === null ? "" : message;
+    },
+    refreshDate,
+    focus() {
+      title.focus();
+    },
+  };
+}
+__export(__exports, { "createQuickInput": () => createQuickInput });
+});
+__define("ui/views/report.js", function (__exports, __require) {
+"use strict";
+/*
+ * 正規化の報告（直した・捨てたもの）を、折りたたみの一覧で見せる
+ */
+
+const { h } = __require("ui/dom.js");
+
+const LEVEL_LABELS = Object.freeze({ error: "問題", drop: "捨てた", fix: "直した", info: "お知らせ" });
+const LEVEL_ORDER = Object.freeze({ error: 0, drop: 1, fix: 2, info: 3 });
+
+/**
+ * @param {{level:string, message:string, before?:string}[]} items
+ * @param {{open?:boolean, max?:number}} [opts]
+ */
+function reportDetails(items, { open = false, max = 100 } = {}) {
+  const sorted = [...items].sort((a, b) => (LEVEL_ORDER[a.level] ?? 9) - (LEVEL_ORDER[b.level] ?? 9));
+  const shown = sorted.slice(0, max);
+  return h(
+    "details",
+    { class: "report", open },
+    h("summary", null, `詳しく（${items.length}件）`),
+    h(
+      "ul",
+      { class: "report-list" },
+      shown.map((i) =>
+        h(
+          "li",
+          { class: ["report-item", `level-${i.level}`] },
+          h("span", { class: "report-level" }, LEVEL_LABELS[i.level] || i.level),
+          h("span", { class: "report-msg" }, i.message),
+          i.before !== undefined ? h("span", { class: "report-before" }, `元の値: ${i.before}`) : null,
+        ),
+      ),
+    ),
+    sorted.length > max ? h("p", { class: "muted" }, `ほか${sorted.length - max}件`) : null,
+  );
+}
+__export(__exports, { "reportDetails": () => reportDetails });
+});
+__require("ui/main.js");
+})();</script>
+</body>
+</html>

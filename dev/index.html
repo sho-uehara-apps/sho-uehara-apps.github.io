@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-KBTVhw/OM1KKNhHBS+d7qS3zb0yn0bQTBb5rzT/vVG0='; style-src 'sha256-cf8GRw2XanQfcJBtXvAoMJmQuUbAahOIWyEgp6OxNT4='; img-src 'self' data: blob:; manifest-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kmfaNq6azKemnpBNKbF4BBhUsCx8VdFqt9SO6DrEbRE='; style-src 'sha256-iZtaRR4mGYvLVOPwoufz1ByzJhEfXdSqFe0qFMfJnsU='; img-src 'self' data: blob:; manifest-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 <title>キャリアグラフ（開発版）</title>
@@ -179,6 +179,30 @@ p {
 .btn-small {
   padding: 4px 10px;
   font-size: 13px;
+}
+
+/* ファイルを選ぶボタン（ラベルをボタンの形にし、中のファイル選択の欄は見えなくする。キーボードでは欄にフォーカスが当たる） */
+.file-button {
+  display: inline-block;
+  position: relative;
+}
+
+.file-button:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 .input {
@@ -636,7 +660,12 @@ button.exp-body:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 6px;
+}
+
+.panel-head h2 {
+  font-size: 19px;
 }
 
 .panel-section {
@@ -662,9 +691,10 @@ button.exp-body:hover {
 
 .quarantine-list li {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 6px 10px;
   padding: 6px 0;
   border-top: 1px solid var(--border);
 }
@@ -675,10 +705,12 @@ button.exp-body:hover {
   flex-shrink: 0;
 }
 
+/* 狭い画面では、ボタンを説明の下に回す */
 .q-main {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1 1 12em;
 }
 
 .q-reason {
@@ -692,9 +724,107 @@ button.exp-body:hover {
   color: var(--muted);
 }
 
+.q-total {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.q-total.is-warn {
+  color: var(--warn-text);
+  font-weight: 600;
+}
+
 .plain-list {
   margin: 0;
   padding-left: 1.2em;
+}
+
+/* ---------- 取り込みの画面・復元 ---------- */
+
+.import-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.import-error {
+  font-weight: 600;
+  color: var(--danger-text);
+}
+
+.import-warn {
+  width: 100%;
+  color: var(--warn-text);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.import-change {
+  font-size: 14px;
+}
+
+.import-confirm {
+  width: 100%;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.import-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-danger-strong {
+  background: var(--danger-text);
+  border-color: var(--danger-text);
+  color: var(--surface);
+  font-weight: 600;
+}
+
+.btn-danger-strong:hover {
+  background: var(--danger-text);
+  filter: brightness(1.08);
+}
+
+.import-status {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.import-status.is-error {
+  font-weight: 600;
+  color: var(--danger-text);
+}
+
+.import-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.recovery-restore {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* ---------- 読み込めないときの画面 ---------- */
@@ -833,7 +963,7 @@ button.exp-body:hover {
 <div id="app"></div>
 <script>(function () {
 "use strict";
-globalThis.CAREER_GRAPH_BUILD = Object.freeze({"channel":"dev","commit":"8346af6","builtAt":"2026-10-07T11:49:25.309Z"});
+globalThis.CAREER_GRAPH_BUILD = Object.freeze({"channel":"dev","commit":"ae36689","builtAt":"2026-10-07T13:54:08.483Z"});
 const __defs = Object.create(null);
 const __cache = Object.create(null);
 function __define(id, fn) {
@@ -872,6 +1002,13 @@ const APP_ID = "career-graph";
 
 /** 保存データの形の版（データバージョン） */
 const SCHEMA_VERSION = 1;
+
+/**
+ * まだ一度も変えていない設定の更新日時。
+ * 端末間のマージでは、設定は更新日時の新しい方を採る。新しく使い始めた端末の既定の設定が、
+ * 別の端末で実際に変えた設定に勝たないよう、既定の設定にはいちばん古い日時を付ける
+ */
+const UNCHANGED_SETTINGS_AT = "1970-01-01T00:00:00.000Z";
 
 /** 能力レベルの定義（指示書「7. 能力レベル」の文言）。市場評価ではなく、自分自身の現在の認識 */
 const LEVELS = Object.freeze([
@@ -1070,7 +1207,7 @@ const FIELD_LABELS = Object.freeze({
   lists: "選択肢",
   replacements: "置換リスト",
 });
-__export(__exports, { "APP_ID": () => APP_ID, "SCHEMA_VERSION": () => SCHEMA_VERSION, "LEVELS": () => LEVELS, "LEVEL_MIN": () => LEVEL_MIN, "LEVEL_MAX": () => LEVEL_MAX, "DEFAULT_LISTS": () => DEFAULT_LISTS, "LIST_LABELS": () => LIST_LABELS, "LOCKED_LABELS": () => LOCKED_LABELS, "ENUMS": () => ENUMS, "ENUM_DEFAULTS": () => ENUM_DEFAULTS, "ENUM_REPAIR_DEFAULTS": () => ENUM_REPAIR_DEFAULTS, "CONTENT_FIELDS": () => CONTENT_FIELDS, "MEANING_FIELDS": () => MEANING_FIELDS, "ID_PREFIX": () => ID_PREFIX, "COLLECTIONS": () => COLLECTIONS, "DERIVED_ID_COLLECTIONS": () => DERIVED_ID_COLLECTIONS, "COLLECTION_LABELS": () => COLLECTION_LABELS, "FIELD_LABELS": () => FIELD_LABELS });
+__export(__exports, { "APP_ID": () => APP_ID, "SCHEMA_VERSION": () => SCHEMA_VERSION, "UNCHANGED_SETTINGS_AT": () => UNCHANGED_SETTINGS_AT, "LEVELS": () => LEVELS, "LEVEL_MIN": () => LEVEL_MIN, "LEVEL_MAX": () => LEVEL_MAX, "DEFAULT_LISTS": () => DEFAULT_LISTS, "LIST_LABELS": () => LIST_LABELS, "LOCKED_LABELS": () => LOCKED_LABELS, "ENUMS": () => ENUMS, "ENUM_DEFAULTS": () => ENUM_DEFAULTS, "ENUM_REPAIR_DEFAULTS": () => ENUM_REPAIR_DEFAULTS, "CONTENT_FIELDS": () => CONTENT_FIELDS, "MEANING_FIELDS": () => MEANING_FIELDS, "ID_PREFIX": () => ID_PREFIX, "COLLECTIONS": () => COLLECTIONS, "DERIVED_ID_COLLECTIONS": () => DERIVED_ID_COLLECTIONS, "COLLECTION_LABELS": () => COLLECTION_LABELS, "FIELD_LABELS": () => FIELD_LABELS });
 });
 __define("core/dates.js", function (__exports, __require) {
 "use strict";
@@ -1452,6 +1589,152 @@ function idFactory(nowMsFn, random) {
 }
 __export(__exports, { "makeId": () => makeId, "isIdLike": () => isIdLike, "linkId": () => linkId, "orderedPair": () => orderedPair, "capRelationId": () => capRelationId, "cryptoRandom": () => cryptoRandom, "idFactory": () => idFactory });
 });
+__define("core/merge.js", function (__exports, __require) {
+"use strict";
+/*
+ * 端末間のマージ（DOM非依存・純粋関数）
+ *
+ * 2つのデータ（この端末のデータと、取り込むデータ）を1つにまとめる。設計書 4.6 の順に行う:
+ *   形をそろえる（normalizeShape）→ 行ごとにマージ → 参照をそろえる（applyIntegrity）
+ * 参照をそろえるのを最後にするのは、片方の端末にしか無い参照先を、マージの前に外してしまわないため。
+ *
+ * 行ごとのマージ:
+ *   - 片方にしか無い行は、そのまま入れる
+ *   - 両方にある行（同じ ID）は、preferVersion で1つを選ぶ（更新日時の新しい方。紐付けは確定が候補に勝つ）
+ *   - 削除は、削除の記録（deletedAt）として伝わる（削除した方が新しければ、削除が残る）
+ * 設定:
+ *   - 更新日時の新しい方を採る（まだ変えていない設定は 1970-01-01 なので、実際に変えた設定が勝つ）
+ *   - 選択肢と置換リストは、もう片方にしか無いものも足す（片方の端末で足したものを失わないため）
+ *   - 制限（設定を画面で変えられるようにするときに直す。設計書 4.6）: 設定全体で1つの更新日時なので、
+ *     別々の端末で別々の項目を変えると、古い方の変更（入社年月など）が消える。選択肢・置換リストの削除と名前の変更は伝わらない（戻る）
+ *
+ * どちらを先に渡しても、何度マージしても、どの順に3台以上をマージしても、同じ結果になる
+ * （選び方が順序に左右されないため。同期で各端末のデータがそろう）。
+ * 並び順も決める（記録日時 → ID の順）。
+ * 例外は設定で、3台以上を違う順にマージすると、足した選択肢の並びと、同じ置換元に違う置換先があるときの置換先が変わりうる
+ * （同期では、どの端末も同期先の内容にそろう）。
+ */
+
+const { COLLECTIONS } = __require("core/constants.js");
+const { applyIntegrity, createReport, normalizeShape, preferVersion, safeText } = __require("core/normalize.js");
+
+function byCreatedThenId(x, y) {
+  if (x.createdAt !== y.createdAt) return x.createdAt < y.createdAt ? -1 : 1;
+  return x.id < y.id ? -1 : x.id > y.id ? 1 : 0;
+}
+
+/** 設定のうち、新しい方（同じ日時なら中身で決める）を先にして返す */
+function newerFirst(x, y) {
+  if (x.updatedAt !== y.updatedAt) return x.updatedAt > y.updatedAt ? [x, y] : [y, x];
+  return safeText(x) <= safeText(y) ? [x, y] : [y, x];
+}
+
+/**
+ * 設定をマージする。
+ * @param {object} x  形をそろえた設定
+ * @param {object} y
+ */
+function mergeSettings(x, y) {
+  const [win, lose] = newerFirst(x, y);
+  const lists = {};
+  for (const k of Object.keys(win.lists)) {
+    const base = win.lists[k];
+    lists[k] = [...base, ...(lose.lists[k] || []).filter((v) => !base.includes(v))];
+  }
+  const froms = new Set(win.replacements.map((r) => r.from));
+  const replacements = [
+    ...win.replacements.map((r) => ({ ...r })),
+    ...lose.replacements.filter((r) => !froms.has(r.from)).map((r) => ({ ...r })),
+  ];
+  return { joinedAt: win.joinedAt, lists, replacements, updatedAt: win.updatedAt };
+}
+
+/**
+ * @typedef {{local:number, incoming:number, added:number, updated:number, same:number, keptLocal:number, result:number}} MergeCount
+ *   local / incoming: マージ前の件数（削除済みを含む）
+ *   added: 取り込む側にしか無く、足した件数 / updated: 両方にあり、取り込む側の版を採った件数
+ *   same: 両方にあり、中身が同じだった件数 / keptLocal: 両方にあり、この端末の版を残した件数
+ *   result: マージ後の件数（参照をそろえたあと）
+ */
+
+/**
+ * 2つのデータをマージする。入力は書き換えない。
+ * @param {object} local     この端末のデータ（正規化済みのもの）
+ * @param {object} incoming  取り込むデータ（正規化済みのもの）
+ * @param {{now:string, newId:(prefix:string)=>string}} opts
+ * @returns {{data:object, report:{items:object[]}, counts:Record<string, MergeCount>, changedLocal:boolean, changedIncoming:boolean}}
+ *   changedLocal / changedIncoming: マージ結果が、それぞれの入力と違うか（同期で、書き戻しが要るかの判断に使う）
+ */
+function mergeData(local, incoming, { now, newId }) {
+  const a = normalizeShape(local, { now, newId });
+  const b = normalizeShape(incoming, { now, newId });
+  const report = createReport();
+  for (const i of a.report.items) report.items.push({ ...i, side: "local" });
+  for (const i of b.report.items) report.items.push({ ...i, side: "incoming" });
+
+  const merged = { settings: mergeSettings(a.data.settings, b.data.settings) };
+  const counts = {};
+  for (const c of COLLECTIONS) {
+    const mine = new Map(a.data[c].map((r) => [r.id, r]));
+    const out = new Map(mine);
+    const n = { local: a.data[c].length, incoming: b.data[c].length, added: 0, updated: 0, same: 0, keptLocal: 0, result: 0 };
+    for (const r of b.data[c]) {
+      const l = mine.get(r.id);
+      if (!l) {
+        out.set(r.id, r);
+        n.added++;
+      } else if (safeText(l) === safeText(r)) {
+        n.same++;
+      } else if (preferVersion(c, l, r) > 0) {
+        out.set(r.id, r);
+        n.updated++;
+      } else {
+        n.keptLocal++;
+      }
+    }
+    merged[c] = [...out.values()].sort(byCreatedThenId);
+    counts[c] = n;
+  }
+
+  const { data } = applyIntegrity(merged, { report });
+  for (const c of COLLECTIONS) counts[c].result = data[c].length;
+  const text = safeText(data);
+  return {
+    data,
+    report,
+    counts,
+    changedLocal: text !== safeText(sortedCopy(a.data)),
+    changedIncoming: text !== safeText(sortedCopy(b.data)),
+  };
+}
+
+/** 並び順だけをマージ結果と同じにした写し（中身が同じかを比べるため） */
+function sortedCopy(data) {
+  const out = { settings: data.settings };
+  for (const c of COLLECTIONS) out[c] = [...data[c]].sort(byCreatedThenId);
+  return out;
+}
+
+/**
+ * 2つのデータの中身が同じか（行の並び順は見ない。設定の選択肢の並び順は見る）。
+ * @param {object} x  正規化済みのデータ
+ * @param {object} y
+ */
+function sameData(x, y) {
+  return safeText(sortedCopy(x)) === safeText(sortedCopy(y));
+}
+
+/** 行の中身（更新日時を除く）。2つの版が、更新日時のほかに違うかを比べるため */
+function rowContent(row) {
+  return safeText({ ...row, updatedAt: null });
+}
+
+/** 設定の中身（更新日時を除く） */
+function settingsContent(settings) {
+  return safeText([settings.joinedAt, settings.lists, settings.replacements]);
+}
+__export(__exports, { "mergeSettings": () => mergeSettings, "mergeData": () => mergeData, "sameData": () => sameData, "rowContent": () => rowContent, "settingsContent": () => settingsContent });
+});
 __define("core/migrate.js", function (__exports, __require) {
 "use strict";
 /*
@@ -1677,7 +1960,7 @@ __define("core/normalize.js", function (__exports, __require) {
  *
  * 2段に分ける（端末間のマージは「形 → マージ → 整合」の順に使う）:
  *   normalizeShape   1件ずつの形をそろえる。ID を決める。設定をそろえる
- *   applyIntegrity   データ全体の参照をそろえる（参照先が無いものを外す、親子を1階層にする）
+ *   applyIntegrity   データ全体の参照をそろえる（参照先が無いものを外す）
  *   normalizeData    上の2つを続けて行う
  *
  * 方針: 黙って直さない。直した・捨てたものは、すべて報告（report.items）に残す。
@@ -1691,7 +1974,7 @@ __define("core/normalize.js", function (__exports, __require) {
  * 正規化で値を直しても updatedAt は上げない（上げると、別の端末での新しい編集に勝ってしまうため）。
  */
 
-const { COLLECTIONS, COLLECTION_LABELS, CONTENT_FIELDS, DEFAULT_LISTS, DERIVED_ID_COLLECTIONS, ENUMS, ENUM_REPAIR_DEFAULTS, FIELD_LABELS, ID_PREFIX, LEVEL_MAX, LEVEL_MIN, LIST_LABELS, LOCKED_LABELS, MEANING_FIELDS } = __require("core/constants.js");
+const { COLLECTIONS, COLLECTION_LABELS, CONTENT_FIELDS, DEFAULT_LISTS, DERIVED_ID_COLLECTIONS, ENUMS, ENUM_REPAIR_DEFAULTS, FIELD_LABELS, ID_PREFIX, LEVEL_MAX, LEVEL_MIN, LIST_LABELS, LOCKED_LABELS, MEANING_FIELDS, UNCHANGED_SETTINGS_AT } = __require("core/constants.js");
 const { canonicalTimestamp, isEndBeforeStart, isPartialDate, isYearMonth, repairPartialDate, repairYearMonth } = __require("core/dates.js");
 const { capRelationId, isIdLike, linkId, orderedPair } = __require("core/ids.js");
 const { SCHEMA, entityKeys } = __require("core/schema.js");
@@ -2155,11 +2438,14 @@ function normalizeRow(collection, raw, { id, now, report, resolveRef = plainReso
 
 /* ---------- 設定 ---------- */
 
-/** 既定の設定 */
-function defaultSettings(now) {
+/**
+ * 既定の設定。更新日時は「まだ変えていない」ことを表す UNCHANGED_SETTINGS_AT
+ * （端末間のマージで、別の端末で実際に変えた設定に勝たないため）。now は互換のために受け取るだけ
+ */
+function defaultSettings(_now) {
   const lists = {};
   for (const k of Object.keys(DEFAULT_LISTS)) lists[k] = [...DEFAULT_LISTS[k]];
-  return { joinedAt: "", lists, replacements: [], updatedAt: now };
+  return { joinedAt: "", lists, replacements: [], updatedAt: UNCHANGED_SETTINGS_AT };
 }
 
 function normalizeSettings(raw, now, report) {
@@ -2258,8 +2544,9 @@ function normalizeSettings(raw, now, report) {
     else if (updatedAt !== raw.updatedAt) note("fix", "timestampFixed", "updatedAt", "設定の更新日時を読める形に直しました", raw.updatedAt);
   }
   if (!updatedAt) {
-    note("fix", "timestampFilled", "updatedAt", "設定の更新日時が無かったので、今の日時にしました", undefined);
-    updatedAt = now;
+    // 「今」にすると、端末間のマージで、別の端末で実際に変えた設定に勝ってしまうので、いちばん古い日時にする
+    note("fix", "timestampFilled", "updatedAt", "設定の更新日時が無かったので、まだ変えていない設定として扱います", undefined);
+    updatedAt = UNCHANGED_SETTINGS_AT;
   }
 
   for (const k of Object.keys(raw)) {
@@ -2491,14 +2778,28 @@ function normalizeShape(raw, { now, newId }) {
  * - 参照先がそもそも無い参照を外す。必須の参照先が無いデータは捨てる
  * - 削除済みのデータへの参照はそのまま残す（削除を取り消せば元に戻る。表示・集計では除いて扱う）
  * - 削除済みのデータ自体は、参照を見ない（削除の記録として残す）
- * - 大まかな経験（親子）は1階層まで。循環しているものだけ親を外し、孫は一番上の親に付け替える
+ * - 大まかな経験（親子）の1階層までの決まりは、ここでは当てはめない（hierarchy.js の effectiveParents で表示と集計に当てはめる）
  * @param {object} data  normalizeShape 済みのデータ
  * @param {{report?: {items:object[]}}} [opts]
  */
 function applyIntegrity(data, { report = createReport() } = {}) {
-  const out = structuredClone(data);
+  const out = copyPlain(data);
   applyIntegrityInPlace(out, report);
   return { data: out, report };
+}
+
+/**
+ * 配列と素のオブジェクトだけでできたデータの深い写し。
+ * structuredClone は古い Safari（15.4 より前）に無いので使わない
+ */
+function copyPlain(v) {
+  if (Array.isArray(v)) return v.map(copyPlain);
+  if (v !== null && typeof v === "object") {
+    const out = {};
+    for (const k of Object.keys(v)) out[k] = copyPlain(v[k]);
+    return out;
+  }
+  return v;
 }
 
 function applyIntegrityInPlace(data, report) {
@@ -2558,51 +2859,8 @@ function applyIntegrityInPlace(data, report) {
     }
     data[c] = kept;
   }
-
-  // 2) 大まかな経験（親子）は1階層まで。生きている経験どうしの親子だけを見る
-  //    （親が削除済みなら、その子は表示上は親の無い経験。削除済みの祖先まではたどらない）
-  const exps = new Map(data.experiences.map((e) => [e.id, e]));
-  const liveParent = (id) => {
-    const e = exps.get(id);
-    if (!e || e.deletedAt !== null || e.parentId === null) return null;
-    const p = exps.get(e.parentId);
-    return p && p.deletedAt === null ? p.id : null;
-  };
-  const snapshot = new Map(data.experiences.map((e) => [e.id, liveParent(e.id)]));
-  const inCycle = (id) => {
-    const seen = new Set();
-    let cur = snapshot.get(id);
-    while (cur !== null && cur !== undefined && !seen.has(cur)) {
-      if (cur === id) return true;
-      seen.add(cur);
-      cur = snapshot.get(cur);
-    }
-    return false;
-  };
-  const cycleMembers = data.experiences.filter((e) => e.deletedAt === null && snapshot.get(e.id) !== null && inCycle(e.id));
-  for (const e of cycleMembers) {
-    const ctx = ctxOf("experiences", e, "parentId");
-    push(report, "drop", "parentCycle", ctx, `${describe(ctx)}の大まかな経験が循環していたので、外しました`, e.parentId);
-    e.parentId = null;
-  }
-  for (const e of data.experiences) {
-    const p = liveParent(e.id);
-    if (p === null) continue;
-    const seen = new Set([e.id, p]);
-    let root = p;
-    for (;;) {
-      const up = liveParent(root);
-      if (up === null || seen.has(up)) break;
-      seen.add(up);
-      root = up;
-    }
-    if (root !== e.parentId) {
-      const ctx = ctxOf("experiences", e, "parentId");
-      const rn = shortName(exps.get(root).title) || root;
-      push(report, "drop", "parentFlattened", ctx, `${describe(ctx)}の大まかな経験を、さらに上の「${rn}」に付け替えました（親子は1階層まで）`, e.parentId);
-      e.parentId = root;
-    }
-  }
+  // 大まかな経験（親子）の「1階層まで」「循環しない」は、保存データを書き換えずに表示と集計で当てはめる（hierarchy.js）。
+  // 書き換えると、端末間のマージで、書き換えた版と元の版が日時の同じ別の中身として競い、端末ごとに結果が分かれるため
 }
 
 /* ---------- データ全体 ---------- */
@@ -2900,10 +3158,11 @@ function storageKeys(channel = "main") {
 }
 
 /**
- * 退避データの1件。raw は元のデータ（文字列。オブジェクトなら JSON にする）
- * @param {{at:string, reason:string, message?:string, raw:unknown}} e
+ * 退避データの1件。raw は元のデータ（文字列。オブジェクトなら JSON にする）。
+ * keep が true なら、理由にかかわらず自動では捨てない（利用者が消すまで守る）
+ * @param {{at:string, reason:string, message?:string, raw:unknown, keep?:boolean}} e
  */
-function makeQuarantineEntry({ at, reason, message, raw }) {
+function makeQuarantineEntry({ at, reason, message, raw, keep = false }) {
   if (canonicalTimestamp(at) !== at) throw new Error(`at が toISOString() の形ではありません: ${safeText(at)}`);
   let text = raw;
   if (typeof text !== "string") {
@@ -2914,7 +3173,9 @@ function makeQuarantineEntry({ at, reason, message, raw }) {
     }
   }
   if (typeof text !== "string") throw new Error("退避するデータを文字にできません");
-  return { at, reason: safeText(reason), message: message === undefined ? "" : safeText(message), raw: text };
+  const entry = { at, reason: safeText(reason), message: message === undefined ? "" : safeText(message), raw: text };
+  if (keep === true) entry.keep = true;
+  return entry;
 }
 
 /** 並べ替え用: 新しい順（日時が読めないものは最後） */
@@ -2928,6 +3189,8 @@ function byAtDesc(a, b) {
 /**
  * 退避データの一覧を読む。新しい順に並べる。
  * 中身（raw）が文字なら、日時が読めなくても捨てない（それが唯一の写しかもしれないため。日時は "" にして最後に並べる）。
+ * 知らない項目は残す（後の版が足した項目を、この版が書き直すときに消さないため）。
+ * 後の版は、守る退避（自動では捨てない退避）に keep: true を付ける。この版は、理由を知らなくても keep: true のものを守る
  */
 function parseQuarantineList(text) {
   if (typeof text !== "string" || text === "") return [];
@@ -2940,8 +3203,8 @@ function parseQuarantineList(text) {
   if (!Array.isArray(arr)) return [];
   const out = [];
   for (const e of arr) {
-    if (!e || typeof e !== "object" || typeof e.raw !== "string") continue;
-    out.push({ at: canonicalTimestamp(e.at) || "", reason: safeText(e.reason ?? ""), message: safeText(e.message ?? ""), raw: e.raw });
+    if (!e || typeof e !== "object" || Array.isArray(e) || typeof e.raw !== "string") continue;
+    out.push({ ...e, at: canonicalTimestamp(e.at) || "", reason: safeText(e.reason ?? ""), message: safeText(e.message ?? ""), raw: e.raw });
   }
   return out.sort(byAtDesc);
 }
@@ -3102,6 +3365,180 @@ function rawFileName(raw, label, t, channel = "main") {
 }
 __export(__exports, { "exportFileName": () => exportFileName, "exportText": () => exportText, "rawFileName": () => rawFileName });
 });
+__define("persist/import.js", function (__exports, __require) {
+"use strict";
+/*
+ * JSON Import の下ごしらえ（DOM非依存・純粋関数）
+ *
+ * 取り込むファイル（または退避データ）を読み、取り込み方ごとの結果を先に作っておく。
+ * 画面は、この結果を見せて「マージする」「置き換える」を選んでもらう（検証レポート）。
+ *   マージする   いまのデータと1つにまとめる（core/merge.js の mergeData）。同じ記録は更新日時の新しい方を残す
+ *   置き換える   この端末のデータを、取り込む側の内容そのものにする。取り込む側に無い記録は消える。
+ *                更新日時は取り込む側のまま（今の日時にしない）。今の日時にすると、置き換えで消した記録の削除や、
+ *                古い内容が、ほかの端末とのマージ・同期で、ほかの端末にも広がってしまうため（設計書 4.8）
+ * どちらでも、取り込む前のデータは退避してから置き換える（呼び出し側の約束。置き換える前のデータは、利用者が消すまで守る）。
+ *
+ * 取り込む側は、マージの前に単独で読み込む（移行・正規化・参照の整合まで。loadFromObject）。
+ * そのため、取り込む側から、この端末にしか無いデータを指す参照は、マージの前に外れる。
+ * このアプリが書いたファイル・退避データは参照の整合がとれているので、起きない（同期では、形をそろえる → マージ → 整合の順にする）。
+ */
+
+const { APP_ID, COLLECTIONS, COLLECTION_LABELS, SCHEMA_VERSION } = __require("core/constants.js");
+const { canonicalTimestamp } = __require("core/dates.js");
+const { mergeData, rowContent, sameData, settingsContent } = __require("core/merge.js");
+const { hasErrors } = __require("core/normalize.js");
+const { loadFromObject } = __require("core/storage-format.js");
+
+function isPlainObject(v) {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+/** 生きている（削除されていない）行の数 */
+function liveCount(data, collection) {
+  return data[collection].filter((e) => e.deletedAt === null).length;
+}
+
+/** 生きている行の数の一覧（例「経験 12件・能力 3件」）。何も無ければ空文字 */
+function liveCountText(data) {
+  return COLLECTIONS.map((c) => [c, liveCount(data, c)])
+    .filter(([, n]) => n > 0)
+    .map(([c, n]) => `${COLLECTION_LABELS[c]} ${n}件`)
+    .join("・");
+}
+
+/**
+ * 取り込むと、画面に見えるデータがどう変わるか。生きている行だけを数え、更新日時だけの違いは数えない。
+ * @returns {{counts: Record<string, {added:number, removed:number, changed:number}>, lines: string[], total: number}}
+ *   lines: 変わる一覧ごとの説明（例「経験：3件増える・1件消える・2件変わる」）。何も変わらなければ空
+ */
+function describeChange(current, next) {
+  const counts = {};
+  const lines = [];
+  let total = 0;
+  for (const c of COLLECTIONS) {
+    const before = new Map(current[c].filter((e) => e.deletedAt === null).map((e) => [e.id, e]));
+    const after = new Map(next[c].filter((e) => e.deletedAt === null).map((e) => [e.id, e]));
+    let added = 0;
+    let removed = 0;
+    let changed = 0;
+    for (const [id, e] of after) {
+      const b = before.get(id);
+      if (!b) added++;
+      else if (rowContent(b) !== rowContent(e)) changed++;
+    }
+    for (const id of before.keys()) if (!after.has(id)) removed++;
+    counts[c] = { added, removed, changed };
+    const parts = [];
+    if (added) parts.push(`${added}件増える`);
+    if (removed) parts.push(`${removed}件消える`);
+    if (changed) parts.push(`${changed}件変わる`);
+    if (parts.length) lines.push(`${COLLECTION_LABELS[c]}：${parts.join("・")}`);
+    total += added + removed + changed;
+  }
+  if (settingsContent(current.settings) !== settingsContent(next.settings)) {
+    lines.push("設定：変わる（入社年月・選択肢など）");
+    total++;
+  }
+  return { counts, lines, total };
+}
+
+/**
+ * 取り込む側にだけある経験のうち、いまのデータの生きている経験と中身（タイトル・走り書き・終了）が同じで、ID の違うもの。
+ * 同じ出来事なら、マージすると二重になる。例: 別の画面（タブ）と食い違って保存を止めたとき、その画面の内容は退避され、
+ * 入力は書きかけに残る。書きかけから記録し直すと新しい ID になるので、退避データをマージすると同じ経験が2件になる。
+ * 開始日は比べない（書きかけの日付は、触っていなければ開いた日の日付になるので、日をまたいで記録し直すと変わる）。
+ * そのかわり、繰り返しの出来事（毎週の「1on1」など）も見つかるので、画面では両方の開始日を並べて、利用者に判断してもらう。
+ * タイトルも走り書きも空の経験は比べない（別物でも同じに見えるため）
+ * @returns {{id:string, title:string, memo:string, start:string, currentStart:string}[]}
+ *   取り込む側の経験（start は取り込む側の開始日、currentStart は、いまのデータの同じ中身の経験の開始日）
+ */
+function findLookalikes(current, incoming) {
+  const key = (e) => JSON.stringify([e.title, e.memo, e.end]);
+  const usable = (e) => e.deletedAt === null && (e.title.trim() !== "" || e.memo.trim() !== "");
+  const currentIds = new Set(current.experiences.map((e) => e.id));
+  const byKey = new Map();
+  for (const e of current.experiences) if (usable(e) && !byKey.has(key(e))) byKey.set(key(e), e);
+  return incoming.experiences
+    .filter((e) => usable(e) && !currentIds.has(e.id) && byKey.has(key(e)))
+    .map((e) => ({ id: e.id, title: e.title, memo: e.memo, start: e.start, currentStart: byKey.get(key(e)).start }));
+}
+
+/**
+ * 保存JSONで包んでいない、データ本体だけのもの（{settings, experiences, ...}）のデータバージョン。
+ * 包んでいないデータは、データバージョン1の版のアプリが作った退避データ（とそれをダウンロードしたファイル）だけなので、
+ * 1として読む（後の版で形が変わっても、移行してから読めるように）。
+ * いまの版の退避データは、保存JSONの形で残している（persist/local.js の quarantineData）
+ */
+const BARE_DATA_VERSION = 1;
+
+/**
+ * @param {string} text  取り込むファイル（退避データ）の中身
+ * @param {{
+ *   current: object,                     いまのデータ（正規化済み）
+ *   now: string, newId: (p:string)=>string,
+ *   migrations?: object, currentVersion?: number,
+ * }} opts
+ * @returns {{ok:false, error:{code:string, message:string}, report?:object|null}
+ *   | {ok:true, savedAt:string|null, bare:boolean,
+ *      load:{data:object, report:object, fromVersion:number, migratedSteps:number[]},
+ *      merge:{data:object, report:object, counts:object, changed:boolean, lookalikes:object[]},
+ *      replace:{data:object, changed:boolean}}}
+ *   bare: 保存JSONで包んでいない、データ本体だけのものだった（以前の版の退避データなど）
+ *   changed: いまのデータと違うか（false なら、取り込んでも何も変わらない。更新日時や削除の記録だけが変わるときも true）。
+ *     replace.changed が false なら、取り込む側の中身がいまのデータと同じ
+ */
+function prepareImport(text, { current, now, newId, migrations, currentVersion = SCHEMA_VERSION }) {
+  if (typeof text !== "string" || text.trim() === "") {
+    return { ok: false, error: { code: "empty", message: "中身が空です" } };
+  }
+  let obj;
+  try {
+    obj = JSON.parse(text);
+  } catch {
+    return { ok: false, error: { code: "parse", message: "JSON として読めませんでした" } };
+  }
+  // データ本体だけのものは、保存JSONで包んで読む（別のツールの JSON は、ここを通っても正規化で error になる。
+  // 10種類の一覧と設定がすべてそろっていないと読めないため）
+  let bare = false;
+  if (isPlainObject(obj) && obj.app === undefined && "settings" in obj && "experiences" in obj) {
+    obj = { app: APP_ID, schemaVersion: BARE_DATA_VERSION, savedAt: null, data: obj };
+    bare = true;
+  }
+  const loaded = loadFromObject(obj, { now, newId, migrations, currentVersion });
+  if (!loaded.ok) {
+    const code = loaded.error.code;
+    let message = loaded.error.message;
+    if (code === "unsafeData") message = "安全に取り込めない問題があります（詳しくは下の「詳しく」）";
+    else if (code === "newerVersion") {
+      message = `このアプリより新しい版（データバージョン${safeVersion(obj)}）で作ったものです。このアプリを再読み込みして新しい版にしてから、取り込んでください`;
+    }
+    return { ok: false, error: { code, message }, report: loaded.report ?? null };
+  }
+  const merged = mergeData(current, loaded.data, { now, newId });
+  if (hasErrors(merged.report)) {
+    return { ok: false, error: { code: "mergeFailed", message: "マージした結果に、安全に保存できない問題があります" }, report: merged.report };
+  }
+  return {
+    ok: true,
+    savedAt: canonicalTimestamp(obj.savedAt) || null,
+    bare,
+    load: { data: loaded.data, report: loaded.report, fromVersion: loaded.fromVersion, migratedSteps: loaded.migratedSteps },
+    merge: {
+      data: merged.data,
+      report: merged.report,
+      counts: merged.counts,
+      changed: merged.changedLocal,
+      lookalikes: findLookalikes(current, loaded.data),
+    },
+    replace: { data: loaded.data, changed: !sameData(current, loaded.data) },
+  };
+}
+
+function safeVersion(obj) {
+  return isPlainObject(obj) && Number.isInteger(obj.schemaVersion) ? obj.schemaVersion : "?";
+}
+__export(__exports, { "liveCount": () => liveCount, "liveCountText": () => liveCountText, "describeChange": () => describeChange, "findLookalikes": () => findLookalikes, "BARE_DATA_VERSION": () => BARE_DATA_VERSION, "prepareImport": () => prepareImport });
+});
 __define("persist/local.js", function (__exports, __require) {
 "use strict";
 /*
@@ -3120,7 +3557,7 @@ __define("persist/local.js", function (__exports, __require) {
  *   5. 書いたら読み直して、書けたことを確かめる
  */
 
-const { SCHEMA_VERSION } = __require("core/constants.js");
+const { APP_ID, SCHEMA_VERSION } = __require("core/constants.js");
 const { canonicalTimestamp } = __require("core/dates.js");
 const { emptyData, hasErrors, needsBackup, normalizeData, safeText } = __require("core/normalize.js");
 const { loadFromText, makeQuarantineEntry, parseQuarantineList, pushQuarantine, serialize, storageKeys, toJson } = __require("core/storage-format.js");
@@ -3142,6 +3579,7 @@ const REASONS = Object.freeze({
   saveFailed: "saveFailed",
   conflict: "conflict",
   quarantineBroken: "quarantineBroken",
+  beforeImport: "beforeImport",
 });
 
 /** 退避の理由の表示名 */
@@ -3152,21 +3590,61 @@ const REASON_LABELS = Object.freeze({
   saveFailed: "保存できなかった入力",
   conflict: "別の画面と食い違ったため保存しなかった入力",
   quarantineBroken: "壊れていた退避データの一覧",
+  beforeImport: "取り込む前のデータ",
 });
+
+/** 退避の理由の表示名（知らない理由は、後の版が足したもの） */
+function reasonLabel(reason) {
+  if (!reason) return "理由不明";
+  return Object.prototype.hasOwnProperty.call(REASON_LABELS, reason) ? REASON_LABELS[reason] : `その他の退避データ（${reason}）`;
+}
 
 /**
  * 自動では捨てない退避（保存されていた元のデータの写し）。唯一の写しになりうるので、
- * 容量が足りなくなっても自動では消さず、利用者がダウンロードしてから消す
+ * 容量が足りなくなっても自動では消さず、利用者がダウンロードしてから消す。
+ * 取り込む前のデータは、新しい方から IMPORT_BACKUPS_KEPT 件だけを守る（下）
  */
 const PROTECTED_REASONS = Object.freeze([
   REASONS.loadFailed,
   REASONS.beforeRepair,
   REASONS.beforeMigrate,
   REASONS.quarantineBroken,
+  REASONS.beforeImport,
 ]);
 
-function isProtectedEntry(e) {
-  return PROTECTED_REASONS.includes(e.reason);
+/**
+ * 守る「取り込む前のデータ」の件数（新しい方から）。それより古いものは、ほかの退避と同じく件数と文字数の上限で捨てる。
+ * 取り込むたびにデータ全体の写しが増え、保存領域を埋めて本体を保存できなくなるのを防ぐため。
+ * マージでは、いまの記録は消えず、更新日時の新しい版に変わるだけなので、古い写しを捨ててよいとする。
+ * 置き換える前のデータは、記録が消える・古い内容に戻ることがあるので、keep を付けて利用者が消すまで守る（呼び出し側）
+ */
+const IMPORT_BACKUPS_KEPT = 2;
+
+/**
+ * 一覧（新しい順）の中で、自動では捨てない退避を見分ける関数を作る。守るのは:
+ *   - keep: true のもの（置き換える前のデータ。後の版が付けたものを含む）
+ *   - 取り込む前のデータ以外で、守る理由のもの
+ *   - keep の無い取り込む前のデータ（マージする前のデータ）の、新しい方から IMPORT_BACKUPS_KEPT 件
+ * @param {{reason:string, keep?:boolean}[]} entries  新しい順
+ */
+function protectorOf(entries) {
+  const recent = new Set(entries.filter((x) => x.reason === REASONS.beforeImport && x.keep !== true).slice(0, IMPORT_BACKUPS_KEPT));
+  return (x) => x.keep === true || (x.reason === REASONS.beforeImport ? recent.has(x) : PROTECTED_REASONS.includes(x.reason));
+}
+
+/**
+ * 退避データの中身を比べるための値。保存JSONの形なら、データバージョンと data の部分だけを使う
+ * （保存日時が違うだけの同じデータを、重ねて退避しないため）。保存JSONの形でなければ null（文字のまま比べる）
+ */
+function contentKey(raw) {
+  let o;
+  try {
+    o = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!isPlainObject(o) || o.app !== APP_ID || !("data" in o)) return null;
+  return `${safeText(o.schemaVersion)}:${JSON.stringify(o.data)}`;
 }
 
 /** 保存領域がいっぱいのときの例外か */
@@ -3241,16 +3719,26 @@ function createLocalPersistence({
 
   /**
    * 退避用の保存キーに1件足す。
-   * - 同じ中身がもう退避してあれば、何もしない（起動のたびに日時だけ新しくならないように）
-   * - 元のデータの退避（読み込めなかった・直す前・移行する前）は、自動では捨てない。唯一の写しになりうるため
+   * - 同じ中身がもう退避してあれば、何もしない（起動のたびに日時だけ新しくならないように）。
+   *   ただし、守る退避を足すときに、同じ中身が守らない退避としてしか無ければ、守る退避に置き換える
+   * - 取り込む前のデータは、同じ中身の退避を置き換えて、新しい日時で一覧の先頭に出す（戻すときに、一番上を選べばよいように）。
+   *   同じ中身が、取り込む前のデータ以外の守る退避にあれば、それを残して足さない
+   * - 元のデータの退避（読み込めなかった・直す前・移行する前）と、新しい方から2件の取り込む前のデータは、自動では捨てない。
+   *   唯一の写しになりうるため
    * - 容量が足りなければ、それ以外（保存できなかった入力の写しなど）を古いものから捨てて入れ直す。
-   *   捨てられるものが無くなっても入らなければ、失敗を返す
+   *   捨てられるものが無くなっても入らなければ、失敗を返す（保存領域の一覧は書き換えない）
+   * - keep を true にすると、理由にかかわらず、利用者が消すまで守る（置き換える前のデータ）。
+   *   同じ中身の退避を置き換えるときも、置き換えられる方に keep があれば引き継ぐ
+   * @param {string} reason
+   * @param {unknown} raw
+   * @param {string} [message]
+   * @param {{keep?:boolean}} [opts]
    * @returns {{ok:true, existing?:boolean} | {ok:false, code:string, message:string}}
    */
-  function quarantine(reason, raw, message = "") {
+  function quarantine(reason, raw, message = "", { keep = false } = {}) {
     let entry;
     try {
-      entry = makeQuarantineEntry({ at: now(), reason, message, raw });
+      entry = makeQuarantineEntry({ at: now(), reason, message, raw, keep });
     } catch (e) {
       return { ok: false, code: "badEntry", message: `退避するデータを作れませんでした（${errorText(e)}）` };
     }
@@ -3258,14 +3746,28 @@ function createLocalPersistence({
     if (error) return { ok: false, code: "unavailable", message: `退避データの一覧を読めませんでした（${errorText(error)}）` };
     if (broken !== null) {
       list = [makeQuarantineEntry({ at: now(), reason: REASONS.quarantineBroken, message: "読めなくなっていた退避データの一覧", raw: broken })];
-    } else if (list.some((x) => x.raw === entry.raw)) {
-      return { ok: true, existing: true };
+    } else {
+      const key = contentKey(entry.raw);
+      const same = (x) => x.raw === entry.raw || (key !== null && contentKey(x.raw) === key);
+      const sameOnes = list.filter(same);
+      // 「守られている」は、いまの一覧で実際に守られているか（古いマージする前のデータは、理由が同じでも守られていない）
+      const guardedNow = protectorOf(list);
+      const entryGuarded = protectorOf([entry, ...list])(entry);
+      if (entry.reason === REASONS.beforeImport) {
+        if (sameOnes.some((x) => x.reason !== REASONS.beforeImport && guardedNow(x))) return { ok: true, existing: true };
+      } else if (sameOnes.some((x) => guardedNow(x) || !entryGuarded)) {
+        return { ok: true, existing: true };
+      }
+      if (sameOnes.some((x) => x.keep === true)) entry.keep = true;
+      list = list.filter((x) => !same(x));
     }
+    // 今足すものを含めた一覧（新しい順）で、守る退避を決める
+    const isProtected = protectorOf([entry, ...list]);
     let maxChars = quarantineMaxChars;
     let lastSize = Infinity;
     let lastError = null;
     for (;;) {
-      const next = pushQuarantine(list, entry, { max: QUARANTINE_MAX, maxChars, isProtected: isProtectedEntry });
+      const next = pushQuarantine(list, entry, { max: QUARANTINE_MAX, maxChars, isProtected });
       const size = sizeOf(next);
       if (size >= lastSize) break; // もう捨てられるものが無い
       lastSize = size;
@@ -3285,6 +3787,22 @@ function createLocalPersistence({
         ? "保存領域がいっぱいで、退避できませんでした"
         : `退避できませんでした（${errorText(lastError)}）`,
     };
+  }
+
+  /**
+   * データ（オブジェクト）を、保存JSONと同じ形（データバージョンと日時つき）にして退避する。
+   * ダウンロードしたファイルを、そのまま取り込めるようにするため。包めなければ、そのまま文字にして退避する
+   * @param {{keep?:boolean}} [opts]  quarantine と同じ
+   * @returns 戻り値は quarantine と同じ
+   */
+  function quarantineData(reason, data, message = "", opts = {}) {
+    let raw;
+    try {
+      raw = toJson(serialize(data, { now: now() }));
+    } catch {
+      raw = data;
+    }
+    return quarantine(reason, raw, message, opts);
   }
 
   function isNewerVersion(text) {
@@ -3395,7 +3913,7 @@ function createLocalPersistence({
       check = null;
     }
     if (!check || hasErrors(check.report)) {
-      const q = quarantine(REASONS.saveFailed, data, "保存前チェックで、直せない問題が見つかったデータ");
+      const q = quarantineData(REASONS.saveFailed, data, "保存前チェックで、直せない問題が見つかったデータ");
       return {
         ok: false,
         code: "invalidData",
@@ -3410,7 +3928,7 @@ function createLocalPersistence({
     let repaired = null;
     if (check.report.items.length > 0) {
       if (needsBackup(check.report)) {
-        const q = quarantine(REASONS.beforeRepair, data, "保存前チェックで値を捨てる前のデータ");
+        const q = quarantineData(REASONS.beforeRepair, data, "保存前チェックで値を捨てる前のデータ");
         if (!q.ok) {
           return {
             ok: false,
@@ -3438,7 +3956,7 @@ function createLocalPersistence({
         restored = true;
       } else {
         const newer = isNewerVersion(current);
-        const q = quarantine(
+        const q = quarantineData(
           REASONS.conflict,
           toSave,
           newer ? "新しい版のアプリが保存していたため、保存しなかった入力" : "別の画面（タブ）が保存していたため、保存しなかった入力",
@@ -3584,6 +4102,7 @@ function createLocalPersistence({
     load,
     save,
     quarantine,
+    quarantineData,
     releaseWithBackup,
     releaseWithoutBackup,
     waitingForBackup,
@@ -3599,7 +4118,7 @@ function createLocalPersistence({
     pendingRaw: () => (pending ? pending.raw : null),
   };
 }
-__export(__exports, { "QUARANTINE_MAX": () => QUARANTINE_MAX, "QUARANTINE_MAX_CHARS": () => QUARANTINE_MAX_CHARS, "REASONS": () => REASONS, "REASON_LABELS": () => REASON_LABELS, "PROTECTED_REASONS": () => PROTECTED_REASONS, "isQuotaError": () => isQuotaError, "createLocalPersistence": () => createLocalPersistence });
+__export(__exports, { "QUARANTINE_MAX": () => QUARANTINE_MAX, "QUARANTINE_MAX_CHARS": () => QUARANTINE_MAX_CHARS, "REASONS": () => REASONS, "REASON_LABELS": () => REASON_LABELS, "reasonLabel": () => reasonLabel, "PROTECTED_REASONS": () => PROTECTED_REASONS, "IMPORT_BACKUPS_KEPT": () => IMPORT_BACKUPS_KEPT, "isQuotaError": () => isQuotaError, "createLocalPersistence": () => createLocalPersistence });
 });
 __define("store/actions.js", function (__exports, __require) {
 "use strict";
@@ -3847,10 +4366,11 @@ __export(__exports, { "createStore": () => createStore });
 __define("ui/app.js", function (__exports, __require) {
 "use strict";
 /*
- * アプリ本体の画面（Phase 2 区切り1）
+ * アプリ本体の画面（Phase 2 区切り1・Phase 3）
  *   ヘッダー  保存状態・最終Exportからの日数・JSON Export・データ
- *   お知らせ  読み込み時の報告、保存の失敗、退避データ、書きかけ、ホーム画面に追加して使うこと
+ *   お知らせ  読み込み時の報告、保存の失敗、退避データ、書きかけ、ホーム画面に追加して使うこと、取り込んだこと
  *   クイック入力と、経験の一覧
+ *   データ画面（JSON Export・取り込み・退避データ）と、取り込みの画面
  *
  * 保存の流れ:
  *   データの変更は store に送り、自動保存（まとめ待ち）で localStorage に書く。
@@ -3858,23 +4378,26 @@ __define("ui/app.js", function (__exports, __require) {
  *   クイック入力の書きかけは、入力のたびに別のキーへ保存し、次に開いたときに戻す（iPhone でアプリが終了しても残す）。
  *   画面が隠れたとき・閉じる前には、待たずに保存する。
  *   別の画面（タブ）が保存したら、こちらに未保存の変更が無ければ読み直し、あれば食い違いとして保存を止める。
+ *   取り込み（JSON Import）は、取り込む前のデータを退避してから置き換え、待たずに保存する。保存できなければ元に戻す。
  */
 
 const { SCHEMA_VERSION } = __require("core/constants.js");
 const { countByLevel } = __require("core/normalize.js");
 const { createAutosaver } = __require("persist/autosave.js");
 const { exportFileName, exportText, rawFileName } = __require("persist/export.js");
-const { REASON_LABELS } = __require("persist/local.js");
+const { describeChange, liveCountText, prepareImport } = __require("persist/import.js");
+const { QUARANTINE_MAX_CHARS, REASONS, reasonLabel } = __require("persist/local.js");
 const { quickAddExperience } = __require("store/actions.js");
 const { reduce } = __require("store/reducer.js");
-const { experienceCounts, exportAge } = __require("store/selectors.js");
+const { experienceCounts, exportAge, firstLine, formatPartialDate } = __require("store/selectors.js");
 const { createStore } = __require("store/store.js");
 const { CHANNEL_LABELS } = __require("ui/build-info.js");
 const { h, setChildren } = __require("ui/dom.js");
 const { isStandalone, localDateTimeText, localDayOf, localTimeText, requestPersistence } = __require("ui/env.js");
-const { deliverTextFile } = __require("ui/files.js");
+const { deliverTextFile, readFileText } = __require("ui/files.js");
 const { openDataPanel } = __require("ui/views/data-panel.js");
 const { renderExperienceList } = __require("ui/views/experience-list.js");
+const { openImportPanel } = __require("ui/views/import-panel.js");
 const { createQuickInput } = __require("ui/views/quick-input.js");
 const { reportDetails } = __require("ui/views/report.js");
 
@@ -3913,6 +4436,7 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
     expanded: new Set(),
     protection: null,
     panel: null,
+    importPanel: null,
   };
   let noticeSeq = 0;
   let toastTimer = null;
@@ -4004,11 +4528,19 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
     return { key: "save", level: "error", text: r.message, details: r.report ? r.report.items : null, actions: [{ ...exp, primary: true }] };
   }
 
-  store.subscribe((_data, action) => {
+  /** クイック入力に出しているカテゴリの選択肢（取り込みや、別の画面の保存の読み直しで変わったら出し直す） */
+  let shownCategories = JSON.stringify(data.settings.lists.categories);
+
+  store.subscribe((next, action) => {
     if (!(action.type === "data/replace" && QUIET_REPLACE.has(action.reason))) {
       ui.dirtyIsQuarantined = false;
       if (!persistence.blocked()) ui.save = { status: "pending", message: "", at: null };
       autosaver.schedule();
+    }
+    const cats = JSON.stringify(next.settings.lists.categories);
+    if (cats !== shownCategories) {
+      shownCategories = cats;
+      quick.setCategories(next.settings.lists.categories);
     }
     renderList();
     renderHeader();
@@ -4396,10 +4928,13 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
       quarantine: list.map((e) => ({
         at: e.at,
         atText: localDateTimeText(e.at),
-        reasonLabel: REASON_LABELS[e.reason] || e.reason || "理由不明",
+        reasonLabel: reasonLabel(e.reason),
         message: e.message,
         size: e.raw.length,
+        keep: e.keep === true,
       })),
+      quarantineTotal: list.reduce((n, e) => n + e.raw.length, 0),
+      quarantineWarnAt: QUARANTINE_MAX_CHARS,
       protection: protectionText(),
       versionLines: [
         `${CHANNEL_LABELS[build.channel]}（データはこのブラウザの中に保存。普段使い用と開発用は別々）`,
@@ -4407,20 +4942,20 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
         `データバージョン：${SCHEMA_VERSION}`,
       ],
       onExport: doExport,
+      onImportFile: importFile,
       onDownloadQuarantine: (i) => {
         const e = list[i];
         if (e) downloadRaw(e.raw, `backup-${e.reason || "unknown"}`);
       },
+      onImportQuarantine: (i) => {
+        const e = list[i];
+        if (!e) return;
+        openImport({ kind: "quarantine", label: reasonLabel(e.reason), atText: localDateTimeText(e.at) }, e.raw);
+      },
       onDeleteQuarantine: (i) => {
         const e = list[i];
         if (!e) return;
-        let ok = false;
-        try {
-          ok = win.confirm("この退避データを削除します。元に戻せません。先にダウンロードして保管しましたか？");
-        } catch {
-          ok = false;
-        }
-        if (!ok) return;
+        if (!ask("この退避データを削除します。元に戻せません。先にダウンロードして保管しましたか？")) return;
         const r = persistence.deleteQuarantine(e.raw);
         if (!r.ok) addNotice({ key: "download", level: "error", text: r.message, dismissible: true });
         if (persistence.listQuarantine().length === 0) removeNotice("quarantine");
@@ -4440,6 +4975,217 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
 
   function refreshPanel() {
     if (ui.panel) ui.panel.refresh(panelView());
+  }
+
+  /** 確認の画面を出す（出せなければ「いいえ」とみなす） */
+  function ask(text) {
+    try {
+      return win.confirm(text) === true;
+    } catch {
+      return false;
+    }
+  }
+
+  /* ---------- 取り込み（JSON Import） ----------
+   * 取り込むもの（ファイル・退避データ）を読んで、取り込みの画面で結果を見せ、「マージする」「置き換える」を選んでもらう。
+   * 選んだら: 取り込む前のデータを退避する（できなければやめる）→ 置き換える → 待たずに保存する（できなければ元に戻す）
+   * 取り込む前のデータの退避は、設計書にあった「直前の自動Export」の代わり（iPhone では共有の画面を自動では開けないため）
+   * 置き換えは、取り込みの画面の中で、消える件数と変わる件数を見せて確かめてから行う
+   */
+
+  const HOW = Object.freeze({
+    merge: { before: "をマージする前", done: "をマージしました", toast: "マージしました" },
+    replace: { before: "の内容で置き換える前", done: "の内容で置き換えました", toast: "置き換えました" },
+  });
+
+  function sourceText(source) {
+    return source.kind === "file" ? `ファイル「${source.name}」` : `退避データ「${source.label}」`;
+  }
+
+  function importFile(file) {
+    const source = { kind: "file", name: file.name || "（名前なし）" };
+    readFileText(file, win).then(
+      (text) => openImport(source, text),
+      (e) => openImport(source, null, e && e.message ? e.message : String(e)),
+    );
+  }
+
+  /**
+   * @param {{kind:"file", name:string} | {kind:"quarantine", label:string, atText:string}} source
+   * @param {string|null} text
+   * @param {string|null} [readError]  ファイルを読めなかったときの理由
+   */
+  function openImport(source, text, readError = null) {
+    if (ui.importPanel) ui.importPanel.close();
+    const state = { source, text, base: null, prep: null, status: null, confirming: null };
+    if (readError !== null) {
+      state.base = store.getData();
+      state.prep = { ok: false, error: { code: "read", message: readError }, report: null };
+    } else {
+      prepareState(state);
+    }
+    ui.importPanel = openImportPanel(root, importView(state), {
+      onClose: () => {
+        ui.importPanel = null;
+      },
+    });
+  }
+
+  function prepareState(state) {
+    state.base = store.getData();
+    state.prep = prepareImport(state.text, { current: state.base, now: env.now(), newId: env.newId });
+    state.confirming = null;
+  }
+
+  function refreshImport(state) {
+    if (ui.importPanel) ui.importPanel.refresh(importView(state));
+  }
+
+  function setImportStatus(state, level, text) {
+    state.status = { level, text };
+    refreshImport(state);
+  }
+
+  function importView(state) {
+    const { prep, source } = state;
+    // 退避データの保存日時は、退避した日時なので、退避データの一覧の日時を出す
+    const savedAtText =
+      source.kind === "quarantine" ? (source.atText ? `${source.atText} に退避` : null) : prep.ok && prep.savedAt ? `${localDateTimeText(prep.savedAt)} に保存` : null;
+    const common = {
+      sourceText: sourceText(source),
+      noun: source.kind === "file" ? "ファイル" : "退避データ",
+      kind: source.kind,
+      savedAtText,
+      status: state.status,
+      confirming: state.confirming,
+      onMerge: () => runImport(state, "merge"),
+      onReplace: () => askReplace(state),
+      onReplaceConfirm: () => runImport(state, "replace"),
+      onReplaceCancel: () => {
+        state.confirming = null;
+        refreshImport(state);
+      },
+      onExport: doExport,
+    };
+    if (!prep.ok) {
+      return { ...common, bare: false, error: { message: prep.error.message, items: prep.report ? prep.report.items : null } };
+    }
+    const c = countByLevel(prep.load.report);
+    const notes = [];
+    if (prep.load.migratedSteps.length > 0) notes.push(`データバージョン${prep.load.fromVersion}から${SCHEMA_VERSION}へ移行して読み込みました。`);
+    if (c.drop > 0) notes.push(`読み込むときに、${c.drop}件の値を捨てて直しました（下の「詳しく」）。`);
+    else if (c.fix > 0) notes.push(`読み込むときに、${c.fix}件の形を整えました（情報は失っていません）。`);
+    // 読み込みの報告と重なる、取り込む側の正規化の報告は出さない
+    const ownItems = (report) => report.items.filter((i) => i.level !== "info" && i.side !== "incoming");
+    return {
+      ...common,
+      bare: prep.bare,
+      error: null,
+      contentText: liveCountText(prep.load.data),
+      loadNotes: notes,
+      loadItems: prep.load.report.items.filter((i) => i.level !== "info"),
+      merge: {
+        lines: describeChange(state.base, prep.merge.data).lines,
+        changed: prep.merge.changed,
+        emptyText: emptyChangeText(prep.merge.changed, prep.replace.changed, common.noun),
+        items: ownItems(prep.merge.report),
+        lookalikes: prep.merge.lookalikes.map((e) => ({
+          title: e.title || firstLine(e.memo, 20) || "（タイトルなし）",
+          start: formatPartialDate(e.start) || "日付不明",
+          currentStart: formatPartialDate(e.currentStart) || "日付不明",
+        })),
+      },
+      replace: {
+        lines: describeChange(state.base, prep.replace.data).lines,
+        changed: prep.replace.changed,
+        emptyText: emptyChangeText(prep.replace.changed, prep.replace.changed, common.noun),
+      },
+    };
+  }
+
+  /**
+   * 画面に見える記録が変わらないときの説明。
+   * @param {boolean} changed       その取り込み方で、いまのデータが変わるか（更新日時・削除の記録を含む）
+   * @param {boolean} differs       取り込むものの中身が、いまのデータと違うか
+   */
+  function emptyChangeText(changed, differs, noun) {
+    if (changed) return "画面に見える記録は変わりません（更新日時や削除の記録だけが変わります）。";
+    if (differs) return `マージしても変わりません（${noun}にある記録は、いまのデータの方が新しいか、同じです）。`;
+    return "いまのデータと同じで、何も変わりません。";
+  }
+
+  /** 置き換えの前に、消える件数と変わる件数を見せて確かめる（取り込みの画面の中で） */
+  function askReplace(state) {
+    if (!state.prep.ok) return;
+    const ch = describeChange(state.base, state.prep.replace.data);
+    const sum = (k) => Object.values(ch.counts).reduce((n, x) => n + x[k], 0);
+    const removed = sum("removed");
+    const changed = sum("changed");
+    const noun = state.source.kind === "file" ? "ファイル" : "退避データ";
+    let what = `いまのデータを、${noun}の内容にします。`;
+    if (removed > 0 && changed > 0) what = `置き換えると、いまの記録のうち${removed}件が消え、${changed}件の内容が${noun}の内容に変わります。`;
+    else if (removed > 0) what = `置き換えると、いまの記録のうち${removed}件が消えます。`;
+    else if (changed > 0) what = `置き換えると、${changed}件の内容が${noun}の内容に変わります。`;
+    state.confirming = {
+      text: `${what}変わるのは、この端末のデータだけです（ほかの端末とマージすると、ほかの端末にある記録や、後から直した内容は戻ります）。置き換える前のデータは退避データに残し、消すまで守ります。置き換えますか？`,
+    };
+    state.status = null;
+    refreshImport(state);
+    // 確かめる欄へフォーカスを移す（取り消す方に。Enter で置き換えてしまわないように）
+    const cancel = ui.importPanel && ui.importPanel.el.querySelector(".import-confirm .btn:not(.btn-danger-strong)");
+    if (cancel) cancel.focus();
+  }
+
+  /** @param {"merge"|"replace"} how */
+  function runImport(state, how) {
+    // 取り込みの画面を開いてから、いまのデータが変わったとき（別の画面の保存を読み直したなど）は、計算し直して確かめてもらう
+    if (store.getData() !== state.base) {
+      prepareState(state);
+      setImportStatus(state, "info", "取り込みの画面を開いてから、いまのデータが変わったので、計算し直しました。もう一度確かめてください。");
+      return;
+    }
+    const prep = state.prep;
+    if (!prep.ok) return;
+    state.confirming = null;
+    const next = how === "merge" ? prep.merge.data : prep.replace.data;
+    if (persistence.blocked()) {
+      setImportStatus(state, "error", "保存を止めているあいだは取り込めません（お知らせを見てください）。");
+      return;
+    }
+    const current = state.base;
+    // 置き換える前のデータは、記録が消える・古い内容に戻ることがあるので、利用者が消すまで守る
+    const backup = persistence.quarantineData(REASONS.beforeImport, current, `${sourceText(state.source)}${HOW[how].before}`, { keep: how === "replace" });
+    refreshPanel();
+    if (!backup.ok) {
+      setImportStatus(
+        state,
+        "error",
+        `取り込む前のデータを退避できなかったので、取り込みをやめました（${backup.message}）。「データ」で古い退避データをダウンロードしてから削除すると、空きができます。`,
+      );
+      return;
+    }
+    const wasDirty = autosaver.isDirty();
+    store.dispatch({ type: "data/replace", data: next, reason: "import" });
+    const saved = autosaver.flush();
+    if (!saved || !saved.ok) {
+      // 保存できなかった取り込みは取り消す（画面の中にしか無いデータを作らない）
+      store.dispatch({ type: "data/replace", data: current, reason: "rollback" });
+      if (!wasDirty) autosaver.markClean();
+      renderHeader();
+      state.base = store.getData();
+      setImportStatus(state, "error", `取り込めませんでした（${saved ? saved.message : "保存の結果が分かりません"}）。データは取り込む前のままです。`);
+      return;
+    }
+    if (ui.importPanel) ui.importPanel.close();
+    if (ui.panel) ui.panel.close();
+    toast(HOW[how].toast);
+    addNotice({
+      key: "imported",
+      level: "info",
+      text: `${sourceText(state.source)}${HOW[how].done}。取り込む前のデータは、「データ」の退避データの一番上に残しています（戻すときは、その退避データを「取り込む」→「置き換える」。戻るのは、この端末のデータだけです）。`,
+      actions: [{ label: "データを開く", run: openPanel }],
+      dismissible: true,
+    });
   }
 
   /* ---------- 読み込みの結果のお知らせ ---------- */
@@ -4777,13 +5523,59 @@ __export(__exports, { "localParts": () => localParts, "localDayOf": () => localD
 __define("ui/files.js", function (__exports, __require) {
 "use strict";
 /*
- * 文字のファイルを端末に渡す（JSON Export・退避データのダウンロード）
+ * ファイルのやりとり
  *
- * 指で操作する端末（スマホ）で共有シートが使えるなら、共有シートを開く。
- * iPhone のホーム画面に追加したアプリでは、ダウンロードが不安定だと報告されているため。
- * 共有シートの「"ファイル"に保存」で保存できる。それ以外はダウンロードする。
- * クリックの処理の中から、await より前に呼ぶこと（共有シートは、利用者の操作の直後しか開けない）。
+ * 選ぶ（JSON Import）: ボタンの形をしたラベルの中に、見えないファイル選択の欄を置く（押すと端末のファイル選択が開く）。
+ *   選べる種類（accept）は絞らない。絞ると iPhone で .json のファイルを選べない（灰色になる）ことがあると報告されているため。
+ *   中身は読み込むときに確かめる
+ * 渡す（JSON Export・退避データのダウンロード）:
+ *   指で操作する端末（スマホ）で共有シートが使えるなら、共有シートを開く。
+ *   iPhone のホーム画面に追加したアプリでは、ダウンロードが不安定だと報告されているため。
+ *   共有シートの「"ファイル"に保存」で保存できる。それ以外はダウンロードする。
+ *   クリックの処理の中から、await より前に呼ぶこと（共有シートは、利用者の操作の直後しか開けない）。
  */
+
+const { h } = __require("ui/dom.js");
+
+/** 読み込むファイルの大きさの上限（これより大きいものは、保存領域に入らないので読まない） */
+const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
+
+/**
+ * ファイルを選ぶボタン
+ * @param {{label:string, onFile:(file:File) => void, primary?:boolean}} opts
+ */
+function fileButton({ label, onFile, primary = false }) {
+  const input = h("input", {
+    type: "file",
+    class: "visually-hidden",
+    onchange: () => {
+      const file = input.files && input.files[0];
+      // 同じファイルをもう一度選んでも change が来るように、選んだ内容を空にする（File はそのまま使える）
+      input.value = "";
+      if (file) onFile(file);
+    },
+  });
+  return h("label", { class: ["btn", "file-button", primary && "btn-primary"] }, input, label);
+}
+
+/**
+ * 利用者が選んだファイルを文字として読む（FileReader を使う。古い Safari でも動くように）
+ * @param {File} file
+ * @param {Window} win
+ * @returns {Promise<string>}
+ */
+function readFileText(file, win) {
+  return new Promise((resolve, reject) => {
+    if (typeof file.size === "number" && file.size > MAX_IMPORT_BYTES) {
+      reject(new Error(`ファイルが大きすぎます（${Math.floor(MAX_IMPORT_BYTES / 1024 / 1024)}MB まで）`));
+      return;
+    }
+    const r = new win.FileReader();
+    r.onload = () => resolve(typeof r.result === "string" ? r.result : "");
+    r.onerror = () => reject(new Error("ファイルを読めませんでした"));
+    r.readAsText(file);
+  });
+}
 
 /**
  * 戻り値の uncertain が true なら、ダウンロードの処理はしたが、保存できたかどうかが分からない
@@ -4840,7 +5632,7 @@ async function deliverTextFile({ text, fileName, mime = "application/json" }, wi
     return { ok: false, message: String(e && e.message ? e.message : e) };
   }
 }
-__export(__exports, { "deliverTextFile": () => deliverTextFile });
+__export(__exports, { "MAX_IMPORT_BYTES": () => MAX_IMPORT_BYTES, "fileButton": () => fileButton, "readFileText": () => readFileText, "deliverTextFile": () => deliverTextFile });
 });
 __define("ui/main.js", function (__exports, __require) {
 "use strict";
@@ -4854,6 +5646,13 @@ const { BUILD_INFO } = __require("ui/build-info.js");
 const { h, setChildren } = __require("ui/dom.js");
 const { createBrowserEnv } = __require("ui/env.js");
 const { renderRecovery } = __require("ui/recovery.js");
+
+/** 読み込めなかったときに選んだ始め方 */
+const START_TEXT = Object.freeze({
+  repaired: "直した内容で始めました。",
+  empty: "空の状態で始めました。",
+  restored: "ファイルの内容で始めました。",
+});
 
 function boot(win) {
   const root = win.document.getElementById("app");
@@ -4871,7 +5670,7 @@ function boot(win) {
       ...common,
       result: load,
       onContinue: ({ data, mode, backedUp }) => {
-        const how = mode === "repaired" ? "直した内容で始めました。" : "空の状態で始めました。";
+        const how = START_TEXT[mode];
         startApp(root, {
           ...common,
           data,
@@ -4926,18 +5725,20 @@ __define("ui/recovery.js", function (__exports, __require) {
  * 保存データは上書きせずに残し、利用者に次を選んでもらう（設計書 3章「変えるもの」）。
  *   元のデータをダウンロード   いつでも選べる
  *   直した内容で続ける         読み込めなかった箇所を直した内容があるとき（元のデータは退避してから）
+ *   JSON ファイルから復元      JSON Export したファイルの内容で始める（元のデータは退避してから。ファイルの中身を見せてから選ぶ）
  *   空で始める                 元のデータは退避してから
  * 新しい版のアプリのデータだったときは、続けずに再読み込みをすすめる（古い画面で上書きしないため）。
  * 元のデータを退避できなかったときは、ダウンロードしてから「退避せずに続ける」を選べるようにする。
- * JSON からの復元は Phase 3（Import）で足す。
  */
 
+const { SCHEMA_VERSION } = __require("core/constants.js");
 const { countByLevel, emptyData } = __require("core/normalize.js");
 const { rawFileName } = __require("persist/export.js");
-const { REASON_LABELS } = __require("persist/local.js");
+const { liveCountText, prepareImport } = __require("persist/import.js");
+const { reasonLabel } = __require("persist/local.js");
 const { h, setChildren } = __require("ui/dom.js");
 const { localDateTimeText } = __require("ui/env.js");
-const { deliverTextFile } = __require("ui/files.js");
+const { deliverTextFile, fileButton, readFileText } = __require("ui/files.js");
 const { reportDetails } = __require("ui/views/report.js");
 
 /**
@@ -4945,12 +5746,13 @@ const { reportDetails } = __require("ui/views/report.js");
  * @param {{
  *   result: {raw:string, error:{code:string, message:string}, data:object|null, report:object|null},
  *   env: object, persistence: object, build: {channel:string}, win: Window,
- *   onContinue: (choice:{data:object, mode:"repaired"|"empty", backedUp:boolean}) => void,
+ *   onContinue: (choice:{data:object, mode:"repaired"|"empty"|"restored", backedUp:boolean}) => void,
  * }} opts
  */
 function renderRecovery(root, { result, env, persistence, build, win, onContinue }) {
   const newer = result.error.code === "newerVersion";
   const status = h("p", { class: "recovery-status", role: "status", hidden: true });
+  /** 退避できずに待っている選択（{mode, data}） */
   let pendingChoice = null;
   const forceButton = h(
     "button",
@@ -4960,7 +5762,7 @@ function renderRecovery(root, { result, env, persistence, build, win, onContinue
       hidden: true,
       onclick: () => {
         persistence.releaseWithoutBackup();
-        if (pendingChoice) finish(pendingChoice, false);
+        if (pendingChoice) onContinue({ ...pendingChoice, backedUp: false });
       },
     },
     "ダウンロードしたので、退避せずに続ける",
@@ -4989,7 +5791,7 @@ function renderRecovery(root, { result, env, persistence, build, win, onContinue
             h(
               "div",
               { class: "q-main" },
-              h("span", { class: "q-reason" }, REASON_LABELS[e.reason] || e.reason || "理由不明"),
+              h("span", { class: "q-reason" }, reasonLabel(e.reason)),
               h("span", { class: "q-meta" }, `${localDateTimeText(e.at) || "日時不明"}・${e.raw.length.toLocaleString("ja-JP")}文字`),
             ),
             h(
@@ -5041,22 +5843,65 @@ function renderRecovery(root, { result, env, persistence, build, win, onContinue
     else if (!r.cancelled) show(`書き出せませんでした（${r.message}）`);
   }
 
-  function finish(choice, backedUp) {
-    const data = choice === "repaired" ? result.data : emptyData(env.now());
-    onContinue({ data, mode: choice, backedUp });
-  }
-
-  function choose(choice) {
+  /** 元のデータを退避してから続ける。退避できなければ、ダウンロードしてから続けるボタンを出す */
+  function choose(mode, data) {
     const q = persistence.releaseWithBackup();
     if (q.ok) {
-      finish(choice, true);
+      onContinue({ mode, data, backedUp: true });
       return;
     }
-    pendingChoice = choice;
+    pendingChoice = { mode, data };
     forceButton.hidden = false;
     show(`元のデータを退避できませんでした（${q.message}）。先に「元のデータをダウンロード」で保管してから、下のボタンで続けてください。`);
     renderQuarantine();
   }
+
+  /* ---------- JSON ファイルから復元 ---------- */
+
+  const restoreBox = h("div", { class: "recovery-restore", hidden: true });
+
+  function showRestore(fileName, text, readError) {
+    restoreBox.hidden = false;
+    const prep =
+      readError !== null
+        ? { ok: false, error: { message: readError }, report: null }
+        : prepareImport(text, { current: emptyData(env.now()), now: env.now(), newId: env.newId });
+    const head = h("p", null, `ファイル「${fileName}」${prep.ok && prep.savedAt ? `（${localDateTimeText(prep.savedAt)} に保存）` : ""}`);
+    if (!prep.ok) {
+      setChildren(
+        restoreBox,
+        head,
+        h("p", { class: "import-error", role: "alert" }, `このファイルからは復元できません：${prep.error.message}`),
+        prep.report && prep.report.items.length > 0 ? reportDetails(prep.report.items) : null,
+        h("p", { class: "muted" }, "このアプリで JSON Export したファイルを選んでください。"),
+      );
+      return;
+    }
+    const c = countByLevel(prep.load.report);
+    setChildren(
+      restoreBox,
+      head,
+      h("p", null, `中身：${liveCountText(prep.load.data) || "記録はありません（設定だけ）"}`),
+      prep.load.migratedSteps.length > 0 ? h("p", null, `データバージョン${prep.load.fromVersion}から${SCHEMA_VERSION}へ移行して読み込みました。`) : null,
+      c.drop > 0 ? h("p", null, `読み込むときに、${c.drop}件の値を捨てて直しました（下の「詳しく」）。`) : null,
+      c.drop > 0 || c.fix > 0 ? reportDetails(prep.load.report.items.filter((i) => i.level !== "info")) : null,
+      h(
+        "div",
+        { class: "recovery-actions" },
+        h("button", { type: "button", class: "btn btn-primary", onclick: () => choose("restored", prep.load.data) }, "このファイルの内容で始める"),
+      ),
+    );
+  }
+
+  function restoreFrom(file) {
+    const name = file.name || "（名前なし）";
+    readFileText(file, win).then(
+      (text) => showRestore(name, text, null),
+      (e) => showRestore(name, null, e && e.message ? e.message : String(e)),
+    );
+  }
+
+  /* ---------- 画面 ---------- */
 
   const counts = result.report ? countByLevel(result.report) : null;
   const actions = [h("button", { type: "button", class: "btn", onclick: download }, "元のデータをダウンロード")];
@@ -5064,9 +5909,10 @@ function renderRecovery(root, { result, env, persistence, build, win, onContinue
     actions.unshift(h("button", { type: "button", class: "btn btn-primary", onclick: () => win.location.reload() }, "再読み込み"));
   } else {
     if (result.data) {
-      actions.unshift(h("button", { type: "button", class: "btn btn-primary", onclick: () => choose("repaired") }, "直した内容で続ける"));
+      actions.unshift(h("button", { type: "button", class: "btn btn-primary", onclick: () => choose("repaired", result.data) }, "直した内容で続ける"));
     }
-    actions.push(h("button", { type: "button", class: "btn btn-danger", onclick: () => choose("empty") }, "空で始める"));
+    actions.push(fileButton({ label: "JSON ファイルから復元", onFile: restoreFrom }));
+    actions.push(h("button", { type: "button", class: "btn btn-danger", onclick: () => choose("empty", emptyData(env.now())) }, "空で始める"));
   }
 
   setChildren(
@@ -5085,10 +5931,23 @@ function renderRecovery(root, { result, env, persistence, build, win, onContinue
             result.data
               ? h("li", null, "直した内容で続ける：読み込めなかった箇所を直した内容で使います（直した箇所は下の「詳しく」）。元のデータは退避用の保存場所に残します。")
               : null,
+            h(
+              "li",
+              null,
+              "JSON ファイルから復元：JSON Export したファイルの内容で始めます。ファイルの中身を確かめてから選べます。元のデータは退避用の保存場所に残します（iPhone では、出てくるメニューで、写真ではなくファイルの方を選んでください）。",
+            ),
             h("li", null, "空で始める：何も入っていない状態から始めます。元のデータは退避用の保存場所に残します。"),
             h("li", null, "選ぶ前に、元のデータをダウンロードして保管しておけます。"),
+            result.data
+              ? h(
+                  "li",
+                  null,
+                  "直した内容とファイルの両方を残したいときは、「直した内容で続ける」を選んでから、「データ」の取り込みでファイルをマージしてください。",
+                )
+              : null,
           ),
       h("div", { class: "recovery-actions" }, actions),
+      restoreBox,
       status,
       forceButton,
       quarantineBox,
@@ -5108,20 +5967,25 @@ __export(__exports, { "renderRecovery": () => renderRecovery });
 __define("ui/views/data-panel.js", function (__exports, __require) {
 "use strict";
 /*
- * データ画面（重ねて開く）: JSON Export、退避データ、保存の保護、この版の情報
- * 設定・データ画面の全体（入社年月・選択肢・Import など）は Phase 3 で作る。
+ * データ画面（重ねて開く）: JSON Export、取り込み（JSON Import）、退避データ、保存の保護、この版の情報
+ * 設定（入社年月・選択肢・プロジェクトなど）は、Phase 3 の残りで足す。
  */
 
-const { h, setChildren } = __require("ui/dom.js");
+const { h } = __require("ui/dom.js");
+const { fileButton } = __require("ui/files.js");
+const { openOverlay } = __require("ui/views/overlay.js");
 
 /**
  * @param {{
  *   exportAgeText: string, exportWarn: boolean,
- *   quarantine: {at:string, atText:string, reasonLabel:string, message:string, size:number}[],
+ *   quarantine: {at:string, atText:string, reasonLabel:string, message:string, size:number, keep:boolean}[],
+ *   quarantineTotal: number, quarantineWarnAt: number,   退避データの中身の文字数の合計と、知らせる目安
  *   protection: string,
  *   versionLines: string[],
  *   onExport: () => void,
+ *   onImportFile: (file:File) => void,
  *   onDownloadQuarantine: (index:number) => void,
+ *   onImportQuarantine: (index:number) => void,
  *   onDeleteQuarantine: (index:number) => void,
  * }} view
  */
@@ -5144,6 +6008,17 @@ function panelContent(view, close) {
     h(
       "section",
       { class: "panel-section" },
+      h("h3", null, "取り込み（JSON Import）"),
+      h(
+        "p",
+        { class: "muted" },
+        "JSON Export したファイルを読み込みます。中身と、取り込むと何が変わるかを確かめてから、「マージする」か「置き換える」を選べます。取り込む前のデータは、退避データに残します。iPhone では、出てくるメニューで、写真ではなくファイルの方を選んでください。",
+      ),
+      fileButton({ label: "JSON ファイルを選ぶ", onFile: view.onImportFile }),
+    ),
+    h(
+      "section",
+      { class: "panel-section" },
       h("h3", null, "退避データ"),
       view.quarantine.length === 0
         ? h("p", { class: "muted" }, "ありません。")
@@ -5158,22 +6033,32 @@ function panelContent(view, close) {
                   "div",
                   { class: "q-main" },
                   h("span", { class: "q-reason" }, q.reasonLabel),
-                  h("span", { class: "q-meta" }, `${q.atText || "日時不明"}・${q.size.toLocaleString("ja-JP")}文字`),
+                  h("span", { class: "q-meta" }, `${q.atText || "日時不明"}・${q.size.toLocaleString("ja-JP")}文字${q.keep ? "・消すまで残す" : ""}`),
                   q.message !== "" ? h("span", { class: "q-message" }, q.message) : null,
                 ),
                 h(
                   "div",
                   { class: "q-actions" },
                   h("button", { type: "button", class: "btn btn-small", onclick: () => view.onDownloadQuarantine(i) }, "ダウンロード"),
+                  h("button", { type: "button", class: "btn btn-small", onclick: () => view.onImportQuarantine(i) }, "取り込む"),
                   h("button", { type: "button", class: "btn btn-small btn-danger", onclick: () => view.onDeleteQuarantine(i) }, "削除"),
                 ),
               ),
             ),
           ),
+      view.quarantine.length > 0
+        ? h(
+            "p",
+            { class: ["q-total", view.quarantineTotal > view.quarantineWarnAt && "is-warn"] },
+            view.quarantineTotal > view.quarantineWarnAt
+              ? `合計 ${view.quarantineTotal.toLocaleString("ja-JP")}文字。大きくなっています。保存領域がいっぱいになると記録できなくなるので、要らないものはダウンロードしてから削除してください。`
+              : `合計 ${view.quarantineTotal.toLocaleString("ja-JP")}文字`,
+          )
+        : null,
       h(
         "p",
         { class: "muted" },
-        "読み込めなかったデータや、上書きを止めたときの入力を、ここに残しています。復元は今後の版で対応します。元のデータの写しは自動では消さないので、保存領域がいっぱいになったら、ダウンロードしてから削除してください。",
+        "読み込めなかったデータ、上書きを止めたときの入力、取り込む前のデータなどを、ここに残しています。「取り込む」で、いまのデータにマージするか、置き換えて戻せます。元のデータの写し（読み込めなかった・直す前・移行する前・置き換える前のデータ）と、新しい2件のマージする前のデータは自動では消さないので、保存領域がいっぱいになったら、ダウンロードしてから削除してください。",
       ),
     ),
     h("section", { class: "panel-section" }, h("h3", null, "保存の保護"), h("p", null, view.protection)),
@@ -5193,36 +6078,7 @@ function panelContent(view, close) {
  * @param {{onClose?: () => void}} [opts]
  */
 function openDataPanel(host, view, { onClose = () => {} } = {}) {
-  const before = document.activeElement;
-  const panel = h("div", { class: "panel", role: "dialog", "aria-modal": "true", "aria-labelledby": "data-panel-title" });
-  const overlay = h(
-    "div",
-    {
-      class: "overlay",
-      onclick: (ev) => {
-        if (ev.target === overlay) close();
-      },
-    },
-    panel,
-  );
-  function onKey(ev) {
-    if (ev.key === "Escape") close();
-  }
-  function close() {
-    document.removeEventListener("keydown", onKey);
-    overlay.remove();
-    if (before && typeof before.focus === "function") before.focus();
-    onClose();
-  }
-  function refresh(next) {
-    setChildren(panel, panelContent(next, close));
-  }
-  refresh(view);
-  host.append(overlay);
-  document.addEventListener("keydown", onKey);
-  const first = panel.querySelector("button");
-  if (first) first.focus();
-  return { refresh, close };
+  return openOverlay(host, { labelledBy: "data-panel-title", render: panelContent, view, onClose });
 }
 __export(__exports, { "openDataPanel": () => openDataPanel });
 });
@@ -5313,6 +6169,240 @@ function renderExperienceList(container, data, { expanded, onAdd }) {
   );
 }
 __export(__exports, { "renderExperienceList": () => renderExperienceList });
+});
+__define("ui/views/import-panel.js", function (__exports, __require) {
+"use strict";
+/*
+ * 取り込みの画面（JSON Import。データ画面の上に重ねて開く）
+ *
+ * 取り込むもの（ファイル・退避データ）を読んだ結果を見せ、「マージする」か「置き換える」を選んでもらう（検証レポート）。
+ *   - 中身の件数、読み込むときに直した・捨てたもの、移行したこと
+ *   - マージすると・置き換えると、いまのデータがどう変わるか（増える・消える・変わる件数）
+ *   - マージすると二重になりそうな経験（中身が同じで ID の違うもの）
+ * 何も変わらない取り込み方は、ボタンを押せないようにする。置き換えは、この画面の中で確かめてから行う。
+ */
+
+const { h } = __require("ui/dom.js");
+const { openOverlay } = __require("ui/views/overlay.js");
+const { reportDetails } = __require("ui/views/report.js");
+
+/**
+ * @typedef {{
+ *   sourceText: string, noun: string, kind: "file"|"quarantine", savedAtText: string|null, bare: boolean,
+ *   error: {message:string, items:object[]|null}|null,
+ *   contentText: string, loadNotes: string[], loadItems: object[],
+ *   merge: {lines:string[], changed:boolean, emptyText:string, items:object[], lookalikes:{title:string, start:string, currentStart:string}[]},
+ *   replace: {lines:string[], changed:boolean, emptyText:string},
+ *   status: {level:"error"|"info", text:string}|null,
+ *   confirming: {text:string}|null,
+ *   onMerge: () => void, onReplace: () => void, onReplaceConfirm: () => void, onReplaceCancel: () => void, onExport: () => void,
+ * }} ImportView
+ *   sourceText: 取り込むものの説明（例「ファイル「career-graph-20261001-1200.json」」）
+ *   noun: 説明文で使う呼び方（「ファイル」か「退避データ」）
+ *   confirming: 置き換えを確かめているときの問い
+ */
+
+/** 変わることの一覧。画面に見える変化が無いときは、その理由（emptyText）を出す */
+function changeList(lines, emptyText) {
+  if (lines.length > 0) return h("ul", { class: "plain-list import-change" }, lines.map((l) => h("li", null, l)));
+  return h("p", { class: "muted" }, emptyText);
+}
+
+/** マージすると二重になりそうな経験の知らせ（両方の開始日を並べて、同じ出来事かを利用者に判断してもらう） */
+function lookalikeBox(list, noun) {
+  return h(
+    "div",
+    { class: "import-warn" },
+    h("p", null, `いまのデータに、同じタイトル・走り書きで ID の違う経験が${list.length}件あります。同じ出来事なら、マージすると2件になります（別の画面で記録し直したものかもしれません）。`),
+    h(
+      "ul",
+      { class: "plain-list" },
+      list.slice(0, 5).map((e) => h("li", null, `「${e.title}」 ${noun}：${e.start}／いま：${e.currentStart}`)),
+      list.length > 5 ? h("li", null, `ほか${list.length - 5}件`) : null,
+    ),
+    h("p", null, "経験を消す画面はまだ無いので、日付を見て、同じ出来事が多いときはマージを見送ってください。"),
+  );
+}
+
+/** @param {ImportView} view */
+function content(view, close) {
+  const head = h(
+    "div",
+    { class: "panel-head" },
+    h("h2", { id: "import-panel-title" }, "取り込み（JSON Import）"),
+    h("button", { type: "button", class: "btn btn-ghost", onclick: close }, "閉じる"),
+  );
+  const source = h("p", null, `取り込むもの：${view.sourceText}${view.savedAtText ? `（${view.savedAtText}）` : ""}`);
+  const status = view.status
+    ? h("p", { class: ["import-status", view.status.level === "error" && "is-error"], role: view.status.level === "error" ? "alert" : "status" }, view.status.text)
+    : null;
+
+  if (view.error) {
+    return [
+      head,
+      h(
+        "div",
+        { class: "import-summary" },
+        source,
+        h("p", { class: "import-error", role: "alert" }, `取り込めません：${view.error.message}`),
+        view.error.items && view.error.items.length > 0 ? reportDetails(view.error.items) : null,
+        h(
+          "p",
+          { class: "muted" },
+          view.kind === "file"
+            ? "このアプリで JSON Export したファイルを選んでください。"
+            : "この退避データは取り込めません。「ダウンロード」で中身を確かめられます。",
+        ),
+      ),
+      h("div", { class: "import-actions" }, h("button", { type: "button", class: "btn", onclick: close }, "閉じる")),
+    ];
+  }
+
+  const replaceAction = view.confirming
+    ? h(
+        "div",
+        { class: "import-confirm", role: "alert" },
+        h("p", null, view.confirming.text),
+        h(
+          "div",
+          { class: "import-confirm-actions" },
+          h("button", { type: "button", class: "btn btn-danger-strong", onclick: view.onReplaceConfirm }, "置き換える"),
+          h("button", { type: "button", class: "btn", onclick: view.onReplaceCancel }, "置き換えない"),
+        ),
+      )
+    : h("button", { type: "button", class: "btn btn-danger", disabled: !view.replace.changed, onclick: view.onReplace }, "置き換える");
+
+  return [
+    head,
+    h(
+      "div",
+      { class: "import-summary" },
+      source,
+      h("p", null, `中身：${view.contentText || "記録はありません（設定だけ）"}`),
+      view.bare ? h("p", { class: "muted" }, "保存JSONの形ではない、データ本体だけのものです（以前の版の退避データなど）。データバージョン1のデータとして読みました。") : null,
+      view.loadNotes.map((t) => h("p", null, t)),
+      view.loadItems.length > 0 ? reportDetails(view.loadItems) : null,
+    ),
+    h(
+      "section",
+      { class: "panel-section" },
+      h("h3", null, "マージする"),
+      h(
+        "p",
+        { class: "muted" },
+        "いまのデータと1つにまとめます。同じ記録が両方にあるときは、更新日時の新しい方を残します（削除も同じで、削除した方が新しければ削除されます）。設定も新しい方を採り、選択肢は両方のものを残します。",
+      ),
+      view.merge.lookalikes.length > 0 ? lookalikeBox(view.merge.lookalikes, view.noun) : null,
+      changeList(view.merge.lines, view.merge.emptyText),
+      view.merge.items.length > 0 ? reportDetails(view.merge.items) : null,
+      h("button", { type: "button", class: "btn btn-primary", disabled: !view.merge.changed, onclick: view.onMerge }, "マージする"),
+    ),
+    h(
+      "section",
+      { class: "panel-section" },
+      h("h3", null, "置き換える"),
+      h(
+        "p",
+        { class: "muted" },
+        `この端末のデータを、${view.noun}の内容にします。${view.noun}に無い記録は消えます。ほかの端末のデータは変わりません（ほかの端末とマージすると、ほかの端末にある記録や、後から直した内容は戻ります）。`,
+      ),
+      changeList(view.replace.lines, view.replace.emptyText),
+      replaceAction,
+    ),
+    h(
+      "section",
+      { class: "panel-section" },
+      h(
+        "p",
+        { class: "muted" },
+        "どちらを選んでも、取り込む前のデータを退避データに残します（「データ」からダウンロード・取り込みができます）。ファイルにも残したいときは、先に JSON Export してください。",
+      ),
+      h("button", { type: "button", class: "btn btn-small", onclick: view.onExport }, "JSON Export"),
+    ),
+    status,
+    h("div", { class: "import-actions" }, h("button", { type: "button", class: "btn", onclick: close }, "やめる")),
+  ];
+}
+
+/**
+ * 取り込みの画面を開く。戻り値の refresh(view) で描き直し、close() で閉じる。
+ * @param {HTMLElement} host
+ * @param {ImportView} view
+ * @param {{onClose?: () => void}} [opts]
+ */
+function openImportPanel(host, view, { onClose = () => {} } = {}) {
+  return openOverlay(host, { labelledBy: "import-panel-title", render: content, view, onClose });
+}
+__export(__exports, { "openImportPanel": () => openImportPanel });
+});
+__define("ui/views/overlay.js", function (__exports, __require) {
+"use strict";
+/*
+ * 重ねて開く画面（データ画面・取り込みの画面）の枠
+ *
+ * 背景を押すか Esc で閉じる。重ねて開いているときは、一番上の画面だけを閉じる。
+ * 閉じたら、開く前に操作していた要素へフォーカスを戻す。
+ */
+
+const { h, setChildren } = __require("ui/dom.js");
+
+/** 開いている画面（下から順） */
+const stack = [];
+
+function onKey(ev) {
+  if (ev.key !== "Escape" || stack.length === 0) return;
+  ev.preventDefault();
+  stack[stack.length - 1].close();
+}
+
+/**
+ * @param {HTMLElement} host
+ * @param {{
+ *   labelledBy: string,                       見出しの id
+ *   render: (view:object, close:() => void) => (Node|string|null)[],
+ *   view: object,
+ *   onClose?: () => void,
+ * }} opts
+ * @returns {{refresh:(view:object) => void, close:() => void, el:HTMLElement}}
+ */
+function openOverlay(host, { labelledBy, render, view, onClose = () => {} }) {
+  const doc = host.ownerDocument;
+  const before = doc.activeElement;
+  const panel = h("div", { class: "panel", role: "dialog", "aria-modal": "true", "aria-labelledby": labelledBy });
+  const overlay = h(
+    "div",
+    {
+      class: "overlay",
+      onclick: (ev) => {
+        if (ev.target === overlay) close();
+      },
+    },
+    panel,
+  );
+  let closed = false;
+  const entry = { close };
+  function close() {
+    if (closed) return;
+    closed = true;
+    const i = stack.indexOf(entry);
+    if (i >= 0) stack.splice(i, 1);
+    if (stack.length === 0) doc.removeEventListener("keydown", onKey);
+    overlay.remove();
+    if (before && before.isConnected && typeof before.focus === "function") before.focus();
+    onClose();
+  }
+  function refresh(next) {
+    if (!closed) setChildren(panel, render(next, close));
+  }
+  refresh(view);
+  if (stack.length === 0) doc.addEventListener("keydown", onKey);
+  stack.push(entry);
+  host.append(overlay);
+  const first = panel.querySelector("button, input, a[href]");
+  if (first) first.focus();
+  return { refresh, close, el: panel };
+}
+__export(__exports, { "openOverlay": () => openOverlay });
 });
 __define("ui/views/quick-input.js", function (__exports, __require) {
 "use strict";
@@ -5522,10 +6612,10 @@ function createQuickInput({ categories, today, onSubmit, onClose, onChange = () 
 
   return {
     el: form,
-    /** カテゴリの選択肢を入れ替える（選んでいたもののうち、残るものは選んだまま） */
+    /** カテゴリの選択肢を入れ替える。選んでいたものは、選択肢から外れても選んだまま残す（入力中のものを黙って捨てない） */
     setCategories(next) {
       list = [...next];
-      selected = new Set([...selected].filter((c) => list.includes(c)));
+      for (const c of selected) if (!list.includes(c)) list.push(c);
       renderChips();
     },
     /** 保存を止めているあいだは記録できないようにする（理由を出す）。message が null なら戻す */

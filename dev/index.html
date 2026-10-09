@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kmfaNq6azKemnpBNKbF4BBhUsCx8VdFqt9SO6DrEbRE='; style-src 'sha256-iZtaRR4mGYvLVOPwoufz1ByzJhEfXdSqFe0qFMfJnsU='; img-src 'self' data: blob:; manifest-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+MyJ8iTDzX13Gqz9eCH38rjsZRNnQcnLE1pRAqhRoWc='; style-src 'sha256-LN3H/WbXTnLBHdpXg+fcF4VPRKt11RRSLEoTP3D4k3E='; img-src 'self' data: blob:; manifest-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 <title>キャリアグラフ（開発版）</title>
@@ -770,34 +770,11 @@ button.exp-body:hover {
   font-size: 14px;
 }
 
-.import-confirm {
-  width: 100%;
-  background: var(--danger-bg);
-  border: 1px solid var(--danger-border);
-  border-radius: 6px;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.import-confirm-actions {
+.import-buttons {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-}
-
-.btn-danger-strong {
-  background: var(--danger-text);
-  border-color: var(--danger-text);
-  color: var(--surface);
-  font-weight: 600;
-}
-
-.btn-danger-strong:hover {
-  background: var(--danger-text);
-  filter: brightness(1.08);
 }
 
 .import-status {
@@ -963,7 +940,7 @@ button.exp-body:hover {
 <div id="app"></div>
 <script>(function () {
 "use strict";
-globalThis.CAREER_GRAPH_BUILD = Object.freeze({"channel":"dev","commit":"ae36689","builtAt":"2026-10-07T13:54:08.483Z"});
+globalThis.CAREER_GRAPH_BUILD = Object.freeze({"channel":"dev","commit":"7561630","builtAt":"2026-10-09T11:38:46.732Z"});
 const __defs = Object.create(null);
 const __cache = Object.create(null);
 function __define(id, fn) {
@@ -3370,13 +3347,11 @@ __define("persist/import.js", function (__exports, __require) {
 /*
  * JSON Import の下ごしらえ（DOM非依存・純粋関数）
  *
- * 取り込むファイル（または退避データ）を読み、取り込み方ごとの結果を先に作っておく。
- * 画面は、この結果を見せて「マージする」「置き換える」を選んでもらう（検証レポート）。
- *   マージする   いまのデータと1つにまとめる（core/merge.js の mergeData）。同じ記録は更新日時の新しい方を残す
- *   置き換える   この端末のデータを、取り込む側の内容そのものにする。取り込む側に無い記録は消える。
- *                更新日時は取り込む側のまま（今の日時にしない）。今の日時にすると、置き換えで消した記録の削除や、
- *                古い内容が、ほかの端末とのマージ・同期で、ほかの端末にも広がってしまうため（設計書 4.8）
- * どちらでも、取り込む前のデータは退避してから置き換える（呼び出し側の約束。置き換える前のデータは、利用者が消すまで守る）。
+ * 取り込むファイル（または退避データ）を読み、マージした結果を先に作っておく。
+ * 画面は、この結果を見せて「マージする」かを選んでもらう（検証レポート）。
+ *   マージ: いまのデータと1つにまとめる（core/merge.js の mergeData）。同じ記録は更新日時の新しい方を残す
+ * 取り込みはマージだけ（置き換えは作らない。設計書 4.8）。取り込む前のデータは、退避してからマージした結果にする（呼び出し側の約束）。
+ * 読み込めないときの「JSON ファイルから復元」は、load.data（取り込むものの内容そのもの）を使う。
  *
  * 取り込む側は、マージの前に単独で読み込む（移行・正規化・参照の整合まで。loadFromObject）。
  * そのため、取り込む側から、この端末にしか無いデータを指す参照は、マージの前に外れる。
@@ -3482,10 +3457,10 @@ const BARE_DATA_VERSION = 1;
  *   | {ok:true, savedAt:string|null, bare:boolean,
  *      load:{data:object, report:object, fromVersion:number, migratedSteps:number[]},
  *      merge:{data:object, report:object, counts:object, changed:boolean, lookalikes:object[]},
- *      replace:{data:object, changed:boolean}}}
+ *      differs:boolean}}
  *   bare: 保存JSONで包んでいない、データ本体だけのものだった（以前の版の退避データなど）
- *   changed: いまのデータと違うか（false なら、取り込んでも何も変わらない。更新日時や削除の記録だけが変わるときも true）。
- *     replace.changed が false なら、取り込む側の中身がいまのデータと同じ
+ *   merge.changed: マージすると、いまのデータが変わるか（false なら、マージしても何も変わらない。更新日時や削除の記録だけが変わるときも true）
+ *   differs: 取り込むものの中身が、いまのデータと違うか（マージしても変わらないときに、理由を書き分けるため）
  */
 function prepareImport(text, { current, now, newId, migrations, currentVersion = SCHEMA_VERSION }) {
   if (typeof text !== "string" || text.trim() === "") {
@@ -3530,7 +3505,7 @@ function prepareImport(text, { current, now, newId, migrations, currentVersion =
       changed: merged.changedLocal,
       lookalikes: findLookalikes(current, loaded.data),
     },
-    replace: { data: loaded.data, changed: !sameData(current, loaded.data) },
+    differs: !sameData(current, loaded.data),
   };
 }
 
@@ -3615,14 +3590,14 @@ const PROTECTED_REASONS = Object.freeze([
 /**
  * 守る「取り込む前のデータ」の件数（新しい方から）。それより古いものは、ほかの退避と同じく件数と文字数の上限で捨てる。
  * 取り込むたびにデータ全体の写しが増え、保存領域を埋めて本体を保存できなくなるのを防ぐため。
- * マージでは、いまの記録は消えず、更新日時の新しい版に変わるだけなので、古い写しを捨ててよいとする。
- * 置き換える前のデータは、記録が消える・古い内容に戻ることがあるので、keep を付けて利用者が消すまで守る（呼び出し側）
+ * 取り込みはマージだけで、いまの記録は消えず、更新日時の新しい版に変わるだけなので、古い写しを捨ててよいとする。
+ * keep の付いた退避（後の版が付けたものなど）は、この数に入れず、利用者が消すまで守る
  */
 const IMPORT_BACKUPS_KEPT = 2;
 
 /**
  * 一覧（新しい順）の中で、自動では捨てない退避を見分ける関数を作る。守るのは:
- *   - keep: true のもの（置き換える前のデータ。後の版が付けたものを含む）
+ *   - keep: true のもの（後の版が付けたものを含む）
  *   - 取り込む前のデータ以外で、守る理由のもの
  *   - keep の無い取り込む前のデータ（マージする前のデータ）の、新しい方から IMPORT_BACKUPS_KEPT 件
  * @param {{reason:string, keep?:boolean}[]} entries  新しい順
@@ -3727,7 +3702,7 @@ function createLocalPersistence({
    *   唯一の写しになりうるため
    * - 容量が足りなければ、それ以外（保存できなかった入力の写しなど）を古いものから捨てて入れ直す。
    *   捨てられるものが無くなっても入らなければ、失敗を返す（保存領域の一覧は書き換えない）
-   * - keep を true にすると、理由にかかわらず、利用者が消すまで守る（置き換える前のデータ）。
+   * - keep を true にすると、理由にかかわらず、利用者が消すまで守る。
    *   同じ中身の退避を置き換えるときも、置き換えられる方に keep があれば引き継ぐ
    * @param {string} reason
    * @param {unknown} raw
@@ -4378,7 +4353,7 @@ __define("ui/app.js", function (__exports, __require) {
  *   クイック入力の書きかけは、入力のたびに別のキーへ保存し、次に開いたときに戻す（iPhone でアプリが終了しても残す）。
  *   画面が隠れたとき・閉じる前には、待たずに保存する。
  *   別の画面（タブ）が保存したら、こちらに未保存の変更が無ければ読み直し、あれば食い違いとして保存を止める。
- *   取り込み（JSON Import）は、取り込む前のデータを退避してから置き換え、待たずに保存する。保存できなければ元に戻す。
+ *   取り込み（JSON Import）は、取り込む前のデータを退避してからマージした結果にし、待たずに保存する。保存できなければ元に戻す。
  */
 
 const { SCHEMA_VERSION } = __require("core/constants.js");
@@ -4987,16 +4962,11 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
   }
 
   /* ---------- 取り込み（JSON Import） ----------
-   * 取り込むもの（ファイル・退避データ）を読んで、取り込みの画面で結果を見せ、「マージする」「置き換える」を選んでもらう。
-   * 選んだら: 取り込む前のデータを退避する（できなければやめる）→ 置き換える → 待たずに保存する（できなければ元に戻す）
-   * 取り込む前のデータの退避は、設計書にあった「直前の自動Export」の代わり（iPhone では共有の画面を自動では開けないため）
-   * 置き換えは、取り込みの画面の中で、消える件数と変わる件数を見せて確かめてから行う
+   * 取り込むもの（ファイル・退避データ）を読んで、取り込みの画面でマージした結果を見せ、「マージする」を選んでもらう。
+   * 選んだら: 取り込む前のデータを退避する（できなければやめる）→ マージした結果にする → 待たずに保存する（できなければ元に戻す）
+   * 取り込みはマージだけ（置き換えは作らない。設計書 4.8）。
+   * 取り込む前のデータの退避は、設計書にあった「直前の自動Export」の代わり（操作を増やさずに、確実に残すため）
    */
-
-  const HOW = Object.freeze({
-    merge: { before: "をマージする前", done: "をマージしました", toast: "マージしました" },
-    replace: { before: "の内容で置き換える前", done: "の内容で置き換えました", toast: "置き換えました" },
-  });
 
   function sourceText(source) {
     return source.kind === "file" ? `ファイル「${source.name}」` : `退避データ「${source.label}」`;
@@ -5017,7 +4987,7 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
    */
   function openImport(source, text, readError = null) {
     if (ui.importPanel) ui.importPanel.close();
-    const state = { source, text, base: null, prep: null, status: null, confirming: null };
+    const state = { source, text, base: null, prep: null, status: null };
     if (readError !== null) {
       state.base = store.getData();
       state.prep = { ok: false, error: { code: "read", message: readError }, report: null };
@@ -5034,7 +5004,6 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
   function prepareState(state) {
     state.base = store.getData();
     state.prep = prepareImport(state.text, { current: state.base, now: env.now(), newId: env.newId });
-    state.confirming = null;
   }
 
   function refreshImport(state) {
@@ -5046,25 +5015,29 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
     refreshImport(state);
   }
 
+  /**
+   * マージしても画面に見える記録が変わらないときの説明
+   * @param {object} prep  prepareImport の結果（ok:true）
+   */
+  function emptyChangeText(prep, noun) {
+    if (prep.merge.changed) return "画面に見える記録は変わりません（更新日時や削除の記録だけが変わります）。";
+    if (prep.differs) return `マージしても変わりません（${noun}にある記録は、いまのデータの方が新しいか、同じです）。`;
+    return "いまのデータと同じで、何も変わりません。";
+  }
+
   function importView(state) {
     const { prep, source } = state;
     // 退避データの保存日時は、退避した日時なので、退避データの一覧の日時を出す
     const savedAtText =
       source.kind === "quarantine" ? (source.atText ? `${source.atText} に退避` : null) : prep.ok && prep.savedAt ? `${localDateTimeText(prep.savedAt)} に保存` : null;
+    const noun = source.kind === "file" ? "ファイル" : "退避データ";
     const common = {
       sourceText: sourceText(source),
-      noun: source.kind === "file" ? "ファイル" : "退避データ",
+      noun,
       kind: source.kind,
       savedAtText,
       status: state.status,
-      confirming: state.confirming,
-      onMerge: () => runImport(state, "merge"),
-      onReplace: () => askReplace(state),
-      onReplaceConfirm: () => runImport(state, "replace"),
-      onReplaceCancel: () => {
-        state.confirming = null;
-        refreshImport(state);
-      },
+      onMerge: () => runImport(state),
       onExport: doExport,
     };
     if (!prep.ok) {
@@ -5075,8 +5048,6 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
     if (prep.load.migratedSteps.length > 0) notes.push(`データバージョン${prep.load.fromVersion}から${SCHEMA_VERSION}へ移行して読み込みました。`);
     if (c.drop > 0) notes.push(`読み込むときに、${c.drop}件の値を捨てて直しました（下の「詳しく」）。`);
     else if (c.fix > 0) notes.push(`読み込むときに、${c.fix}件の形を整えました（情報は失っていません）。`);
-    // 読み込みの報告と重なる、取り込む側の正規化の報告は出さない
-    const ownItems = (report) => report.items.filter((i) => i.level !== "info" && i.side !== "incoming");
     return {
       ...common,
       bare: prep.bare,
@@ -5087,57 +5058,19 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
       merge: {
         lines: describeChange(state.base, prep.merge.data).lines,
         changed: prep.merge.changed,
-        emptyText: emptyChangeText(prep.merge.changed, prep.replace.changed, common.noun),
-        items: ownItems(prep.merge.report),
+        emptyText: emptyChangeText(prep, noun),
+        // 読み込みの報告と重なる、取り込む側の正規化の報告は出さない
+        items: prep.merge.report.items.filter((i) => i.level !== "info" && i.side !== "incoming"),
         lookalikes: prep.merge.lookalikes.map((e) => ({
           title: e.title || firstLine(e.memo, 20) || "（タイトルなし）",
           start: formatPartialDate(e.start) || "日付不明",
           currentStart: formatPartialDate(e.currentStart) || "日付不明",
         })),
       },
-      replace: {
-        lines: describeChange(state.base, prep.replace.data).lines,
-        changed: prep.replace.changed,
-        emptyText: emptyChangeText(prep.replace.changed, prep.replace.changed, common.noun),
-      },
     };
   }
 
-  /**
-   * 画面に見える記録が変わらないときの説明。
-   * @param {boolean} changed       その取り込み方で、いまのデータが変わるか（更新日時・削除の記録を含む）
-   * @param {boolean} differs       取り込むものの中身が、いまのデータと違うか
-   */
-  function emptyChangeText(changed, differs, noun) {
-    if (changed) return "画面に見える記録は変わりません（更新日時や削除の記録だけが変わります）。";
-    if (differs) return `マージしても変わりません（${noun}にある記録は、いまのデータの方が新しいか、同じです）。`;
-    return "いまのデータと同じで、何も変わりません。";
-  }
-
-  /** 置き換えの前に、消える件数と変わる件数を見せて確かめる（取り込みの画面の中で） */
-  function askReplace(state) {
-    if (!state.prep.ok) return;
-    const ch = describeChange(state.base, state.prep.replace.data);
-    const sum = (k) => Object.values(ch.counts).reduce((n, x) => n + x[k], 0);
-    const removed = sum("removed");
-    const changed = sum("changed");
-    const noun = state.source.kind === "file" ? "ファイル" : "退避データ";
-    let what = `いまのデータを、${noun}の内容にします。`;
-    if (removed > 0 && changed > 0) what = `置き換えると、いまの記録のうち${removed}件が消え、${changed}件の内容が${noun}の内容に変わります。`;
-    else if (removed > 0) what = `置き換えると、いまの記録のうち${removed}件が消えます。`;
-    else if (changed > 0) what = `置き換えると、${changed}件の内容が${noun}の内容に変わります。`;
-    state.confirming = {
-      text: `${what}変わるのは、この端末のデータだけです（ほかの端末とマージすると、ほかの端末にある記録や、後から直した内容は戻ります）。置き換える前のデータは退避データに残し、消すまで守ります。置き換えますか？`,
-    };
-    state.status = null;
-    refreshImport(state);
-    // 確かめる欄へフォーカスを移す（取り消す方に。Enter で置き換えてしまわないように）
-    const cancel = ui.importPanel && ui.importPanel.el.querySelector(".import-confirm .btn:not(.btn-danger-strong)");
-    if (cancel) cancel.focus();
-  }
-
-  /** @param {"merge"|"replace"} how */
-  function runImport(state, how) {
+  function runImport(state) {
     // 取り込みの画面を開いてから、いまのデータが変わったとき（別の画面の保存を読み直したなど）は、計算し直して確かめてもらう
     if (store.getData() !== state.base) {
       prepareState(state);
@@ -5146,15 +5079,12 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
     }
     const prep = state.prep;
     if (!prep.ok) return;
-    state.confirming = null;
-    const next = how === "merge" ? prep.merge.data : prep.replace.data;
     if (persistence.blocked()) {
       setImportStatus(state, "error", "保存を止めているあいだは取り込めません（お知らせを見てください）。");
       return;
     }
     const current = state.base;
-    // 置き換える前のデータは、記録が消える・古い内容に戻ることがあるので、利用者が消すまで守る
-    const backup = persistence.quarantineData(REASONS.beforeImport, current, `${sourceText(state.source)}${HOW[how].before}`, { keep: how === "replace" });
+    const backup = persistence.quarantineData(REASONS.beforeImport, current, `${sourceText(state.source)}をマージする前`);
     refreshPanel();
     if (!backup.ok) {
       setImportStatus(
@@ -5165,7 +5095,7 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
       return;
     }
     const wasDirty = autosaver.isDirty();
-    store.dispatch({ type: "data/replace", data: next, reason: "import" });
+    store.dispatch({ type: "data/replace", data: prep.merge.data, reason: "import" });
     const saved = autosaver.flush();
     if (!saved || !saved.ok) {
       // 保存できなかった取り込みは取り消す（画面の中にしか無いデータを作らない）
@@ -5178,11 +5108,11 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
     }
     if (ui.importPanel) ui.importPanel.close();
     if (ui.panel) ui.panel.close();
-    toast(HOW[how].toast);
+    toast("マージしました");
     addNotice({
       key: "imported",
       level: "info",
-      text: `${sourceText(state.source)}${HOW[how].done}。取り込む前のデータは、「データ」の退避データの一番上に残しています（戻すときは、その退避データを「取り込む」→「置き換える」。戻るのは、この端末のデータだけです）。`,
+      text: `${sourceText(state.source)}をマージしました。取り込む前のデータは、「データ」の退避データに残しています。`,
       actions: [{ label: "データを開く", run: openPanel }],
       dismissible: true,
     });
@@ -5254,9 +5184,11 @@ function startApp(root, { data, env, persistence, build, win, load = null, notic
   if (load && load.kind === "unavailable") addNotice({ key: "save", level: "error", text: load.message });
   for (const n of notices) addNotice(n);
 
+  // 取り込む前のデータは、取り込んだときに知らせているので、起動時のお知らせのきっかけにはしない（取り込むたびに出ないように）
   const quarantineList = persistence.listQuarantine();
-  if (quarantineList.length > 0) {
-    const newest = quarantineList.map((e) => e.at).filter((a) => a !== "").sort().pop() || "";
+  const notable = quarantineList.filter((e) => e.reason !== REASONS.beforeImport);
+  if (notable.length > 0) {
+    const newest = notable.map((e) => e.at).filter((a) => a !== "").sort().pop() || "";
     const seen = ui.prefs.quarantineSeenAt;
     if (!seen || (newest !== "" && newest > seen)) {
       addNotice({
@@ -6012,7 +5944,7 @@ function panelContent(view, close) {
       h(
         "p",
         { class: "muted" },
-        "JSON Export したファイルを読み込みます。中身と、取り込むと何が変わるかを確かめてから、「マージする」か「置き換える」を選べます。取り込む前のデータは、退避データに残します。iPhone では、出てくるメニューで、写真ではなくファイルの方を選んでください。",
+        "JSON Export したファイルを、いまのデータにマージします（いまの記録は消えません）。中身と、マージすると何が変わるかを確かめてから選べます。取り込む前のデータは、退避データに残します。iPhone では、出てくるメニューで、写真ではなくファイルの方を選んでください。",
       ),
       fileButton({ label: "JSON ファイルを選ぶ", onFile: view.onImportFile }),
     ),
@@ -6058,7 +5990,7 @@ function panelContent(view, close) {
       h(
         "p",
         { class: "muted" },
-        "読み込めなかったデータ、上書きを止めたときの入力、取り込む前のデータなどを、ここに残しています。「取り込む」で、いまのデータにマージするか、置き換えて戻せます。元のデータの写し（読み込めなかった・直す前・移行する前・置き換える前のデータ）と、新しい2件のマージする前のデータは自動では消さないので、保存領域がいっぱいになったら、ダウンロードしてから削除してください。",
+        "読み込めなかったデータ、上書きを止めたときの入力、取り込む前のデータなどを、ここに残しています。「取り込む」で、いまのデータにマージできます。元のデータの写し（読み込めなかった・直す前・移行する前のデータ）と、新しい2件の取り込む前のデータは自動では消さないので、保存領域がいっぱいになったら、ダウンロードしてから削除してください。",
       ),
     ),
     h("section", { class: "panel-section" }, h("h3", null, "保存の保護"), h("p", null, view.protection)),
@@ -6175,11 +6107,11 @@ __define("ui/views/import-panel.js", function (__exports, __require) {
 /*
  * 取り込みの画面（JSON Import。データ画面の上に重ねて開く）
  *
- * 取り込むもの（ファイル・退避データ）を読んだ結果を見せ、「マージする」か「置き換える」を選んでもらう（検証レポート）。
+ * 取り込むもの（ファイル・退避データ）を読んだ結果を見せ、マージするかを選んでもらう（検証レポート）。
  *   - 中身の件数、読み込むときに直した・捨てたもの、移行したこと
- *   - マージすると・置き換えると、いまのデータがどう変わるか（増える・消える・変わる件数）
+ *   - マージすると、いまのデータがどう変わるか（増える・消える・変わる件数）
  *   - マージすると二重になりそうな経験（中身が同じで ID の違うもの）
- * 何も変わらない取り込み方は、ボタンを押せないようにする。置き換えは、この画面の中で確かめてから行う。
+ * マージしても何も変わらないときは、ボタンを押せないようにする。取り込みはマージだけ（置き換えは作らない。設計書 4.8）。
  */
 
 const { h } = __require("ui/dom.js");
@@ -6192,14 +6124,11 @@ const { reportDetails } = __require("ui/views/report.js");
  *   error: {message:string, items:object[]|null}|null,
  *   contentText: string, loadNotes: string[], loadItems: object[],
  *   merge: {lines:string[], changed:boolean, emptyText:string, items:object[], lookalikes:{title:string, start:string, currentStart:string}[]},
- *   replace: {lines:string[], changed:boolean, emptyText:string},
  *   status: {level:"error"|"info", text:string}|null,
- *   confirming: {text:string}|null,
- *   onMerge: () => void, onReplace: () => void, onReplaceConfirm: () => void, onReplaceCancel: () => void, onExport: () => void,
+ *   onMerge: () => void, onExport: () => void,
  * }} ImportView
  *   sourceText: 取り込むものの説明（例「ファイル「career-graph-20261001-1200.json」」）
  *   noun: 説明文で使う呼び方（「ファイル」か「退避データ」）
- *   confirming: 置き換えを確かめているときの問い
  */
 
 /** 変わることの一覧。画面に見える変化が無いときは、その理由（emptyText）を出す */
@@ -6258,20 +6187,6 @@ function content(view, close) {
     ];
   }
 
-  const replaceAction = view.confirming
-    ? h(
-        "div",
-        { class: "import-confirm", role: "alert" },
-        h("p", null, view.confirming.text),
-        h(
-          "div",
-          { class: "import-confirm-actions" },
-          h("button", { type: "button", class: "btn btn-danger-strong", onclick: view.onReplaceConfirm }, "置き換える"),
-          h("button", { type: "button", class: "btn", onclick: view.onReplaceCancel }, "置き換えない"),
-        ),
-      )
-    : h("button", { type: "button", class: "btn btn-danger", disabled: !view.replace.changed, onclick: view.onReplace }, "置き換える");
-
   return [
     head,
     h(
@@ -6286,7 +6201,7 @@ function content(view, close) {
     h(
       "section",
       { class: "panel-section" },
-      h("h3", null, "マージする"),
+      h("h3", null, "マージすると"),
       h(
         "p",
         { class: "muted" },
@@ -6295,29 +6210,17 @@ function content(view, close) {
       view.merge.lookalikes.length > 0 ? lookalikeBox(view.merge.lookalikes, view.noun) : null,
       changeList(view.merge.lines, view.merge.emptyText),
       view.merge.items.length > 0 ? reportDetails(view.merge.items) : null,
-      h("button", { type: "button", class: "btn btn-primary", disabled: !view.merge.changed, onclick: view.onMerge }, "マージする"),
-    ),
-    h(
-      "section",
-      { class: "panel-section" },
-      h("h3", null, "置き換える"),
       h(
         "p",
         { class: "muted" },
-        `この端末のデータを、${view.noun}の内容にします。${view.noun}に無い記録は消えます。ほかの端末のデータは変わりません（ほかの端末とマージすると、ほかの端末にある記録や、後から直した内容は戻ります）。`,
+        "取り込む前のデータは、退避データに残します（「データ」からダウンロードできます）。ファイルにも残したいときは、先に JSON Export してください。",
       ),
-      changeList(view.replace.lines, view.replace.emptyText),
-      replaceAction,
-    ),
-    h(
-      "section",
-      { class: "panel-section" },
       h(
-        "p",
-        { class: "muted" },
-        "どちらを選んでも、取り込む前のデータを退避データに残します（「データ」からダウンロード・取り込みができます）。ファイルにも残したいときは、先に JSON Export してください。",
+        "div",
+        { class: "import-buttons" },
+        h("button", { type: "button", class: "btn btn-primary", disabled: !view.merge.changed, onclick: view.onMerge }, "マージする"),
+        h("button", { type: "button", class: "btn btn-small", onclick: view.onExport }, "JSON Export"),
       ),
-      h("button", { type: "button", class: "btn btn-small", onclick: view.onExport }, "JSON Export"),
     ),
     status,
     h("div", { class: "import-actions" }, h("button", { type: "button", class: "btn", onclick: close }, "やめる")),
